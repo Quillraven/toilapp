@@ -4,12 +4,14 @@ import org.springframework.data.mongodb.core.mapping.Document
 
 @Document
 data class Toilet(
-    val title: String? = null,
-    val description: String? = null,
-    val preview: String? = null,
-    val rating: Int? = null,
+    val title: String = "",
+    val location: String = "",
+    val preview: String = "",
+    val rating: Int = 0,
+    val disabled: Boolean = false,
+    val toiletCrewApproved: Boolean = false,
+    val description: String = "",
     val comments: Array<Comment>? = null,
-    val location: String? = null,
     val images: Array<String>? = null
 ) {
     override fun equals(other: Any?): Boolean {

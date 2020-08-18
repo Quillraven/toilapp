@@ -17,13 +17,21 @@ import org.springframework.web.bind.annotation.RestController
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import reactor.kotlin.core.publisher.toMono
+import kotlin.reflect.KClass
+import kotlin.reflect.KProperty1
+import kotlin.reflect.full.declaredMemberProperties
 
 private val LOG = LoggerFactory.getLogger(ToiletController::class.java)
+
+fun <T : Any> KClass<out T>.getNonNullProperties(vararg exceptions: KProperty1<T, String>) =
+    declaredMemberProperties
+        .filter { !it.returnType.isMarkedNullable && !exceptions.contains(it) }
+        .map { it.name }
+        .toTypedArray()
 
 @RestController
 @RequestMapping("/api")
 class ToiletController {
-
     @Autowired
     lateinit var toiletRepository: ToiletRepository
 
@@ -32,9 +40,11 @@ class ToiletController {
         return toiletRepository.findAll(
             Example.of(
                 Toilet(location = location),
-                ExampleMatcher.matchingAny().withMatcher("location", contains())
+                ExampleMatcher.matching()
+                    .withMatcher(Toilet::location.name, contains())
+                    .withIgnorePaths(*Toilet::class.getNonNullProperties(Toilet::location))
             ),
-            Sort.by("location")
+            Sort.by(Toilet::location.name)
         ).apply {
             subscribe { toilet ->
                 LOG.debug("Found nearby toilet: $toilet")
