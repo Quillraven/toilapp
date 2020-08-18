@@ -2,6 +2,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 repositories {
     mavenCentral()
+    jcenter()
 }
 
 plugins {
@@ -27,6 +28,9 @@ dependencies {
         exclude(group = "org.junit.vintage", module = "junit-vintage-engine")
     }
     testImplementation("io.projectreactor:reactor-test")
+    testImplementation("org.spekframework.spek2:spek-dsl-jvm:2.0.12")
+    testRuntimeOnly("org.spekframework.spek2:spek-runner-junit5:2.0.12")
+    testImplementation("org.amshove.kluent:kluent:1.61")
 }
 
 tasks.withType<Test> {
