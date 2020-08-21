@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
-import reactor.kotlin.core.publisher.toMono
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 import kotlin.reflect.full.declaredMemberProperties
@@ -37,6 +36,7 @@ class ToiletController {
 
     @GetMapping("/toilets/{location}")
     fun getNearbyToilets(@PathVariable("location") location: String): Flux<Toilet> {
+        LOG.debug("getNearbyToiler: $location")
         return toiletRepository.findAll(
             Example.of(
                 Toilet(location = location),
@@ -45,28 +45,18 @@ class ToiletController {
                     .withIgnorePaths(*Toilet::class.getNonNullProperties(Toilet::location))
             ),
             Sort.by(Toilet::location.name)
-        ).apply {
-            subscribe { toilet ->
-                LOG.debug("Found nearby toilet: $toilet")
-            }
-        }
+        )
     }
 
     @GetMapping("/toilets")
     fun getAllToilets(): Flux<Toilet> {
-        return toiletRepository.findAll().apply {
-            subscribe { toilet ->
-                LOG.debug("Found toilet: $toilet")
-            }
-        }
+        LOG.debug("getAllToilets")
+        return toiletRepository.findAll()
     }
 
     @PostMapping("/toilets")
     fun createToilet(@RequestBody toilet: Toilet): Mono<Toilet> {
-        return toiletRepository.save(toilet).toMono().apply {
-            subscribe { newToilet ->
-                LOG.debug("Created new toilet: $newToilet")
-            }
-        }
+        LOG.debug("createToilet: $toilet")
+        return toiletRepository.save(toilet)
     }
 }
