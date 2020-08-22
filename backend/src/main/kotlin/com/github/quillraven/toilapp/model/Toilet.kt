@@ -1,11 +1,12 @@
 package com.github.quillraven.toilapp.model
 
+import org.springframework.data.mongodb.core.geo.GeoJsonPoint
 import org.springframework.data.mongodb.core.mapping.Document
 
 @Document
 data class Toilet(
     val title: String = "",
-    val location: String = "",
+    val location: GeoJsonPoint = GeoJsonPoint(0.0, 0.0),
     val preview: String = "",
     val rating: Int = 0,
     val disabled: Boolean = false,
