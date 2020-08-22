@@ -1,2 +1,2 @@
 rootProject.name = "toilapp"
-include (":backend")
+include(":backend", ":frontend")
