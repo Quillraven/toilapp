@@ -32,17 +32,17 @@ class ToiletController {
 
     @GetMapping("/toilets")
     fun getNearbyToilets(
-        @RequestParam(required = false) longitude: Double?,
-        @RequestParam(required = false) latitude: Double?,
+        @RequestParam(required = false) x: Double?,
+        @RequestParam(required = false) y: Double?,
         @RequestParam(required = false) maxDistanceInMeters: Double?
     ): Flux<Toilet> {
-        LOG.debug("getNearbyToilets: (longitude=$longitude, latitude=$latitude, maxDistanceInMeters=$maxDistanceInMeters)")
+        LOG.debug("getNearbyToilets: (longitude=$x, latitude=$y, maxDistanceInMeters=$maxDistanceInMeters)")
         return when {
-            longitude == null || latitude == null || maxDistanceInMeters == null -> {
+            x == null || y == null || maxDistanceInMeters == null -> {
                 toiletRepository.findAll()
             }
             else -> {
-                toiletRepository.getNearbyToilets(longitude, latitude, maxDistanceInMeters)
+                toiletRepository.getNearbyToilets(x, y, maxDistanceInMeters)
             }
         }
     }

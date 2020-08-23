@@ -24,8 +24,8 @@ interface ToiletRepository : ReactiveMongoRepository<Toilet, String> {
     """
     )
     fun getNearbyToilets(
-        longitude: Double,
-        latitude: Double,
+        x: Double,
+        y: Double,
         maxDistanceInMeters: Double
     ): Flux<Toilet>
 }
