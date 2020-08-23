@@ -1,11 +1,15 @@
 package com.github.quillraven.toilapp.controller
 
+import com.github.quillraven.toilapp.ToiletDoesNotExistException
 import com.github.quillraven.toilapp.model.Toilet
 import com.github.quillraven.toilapp.repository.ToiletRepository
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
@@ -30,6 +34,20 @@ class ToiletController {
     @Autowired
     lateinit var toiletRepository: ToiletRepository
 
+    @PostMapping("/toilets")
+    fun createToilet(@RequestBody toilet: Toilet): Mono<Toilet> {
+        LOG.debug("createToilet: $toilet")
+        return toiletRepository.save(toilet)
+    }
+
+    @PutMapping("/toilets/{id}")
+    fun updateToilet(@PathVariable id: String, @RequestBody toilet: Toilet): Mono<Toilet> {
+        LOG.debug("updateToilet: (id=$id, toilet=$toilet)")
+        return toiletRepository.findById(id)
+            .flatMap { toiletRepository.save(toilet.copy(id = id)) }
+            .switchIfEmpty(Mono.error(ToiletDoesNotExistException(id)))
+    }
+
     @GetMapping("/toilets")
     fun getNearbyToilets(
         @RequestParam(required = false) x: Double?,
@@ -47,9 +65,9 @@ class ToiletController {
         }
     }
 
-    @PostMapping("/toilets")
-    fun createToilet(@RequestBody toilet: Toilet): Mono<Toilet> {
-        LOG.debug("createToilet: $toilet")
-        return toiletRepository.save(toilet)
+    @DeleteMapping("/toilets/{id}")
+    fun deleteToilet(@PathVariable id: String): Mono<Void> {
+        LOG.debug("deleteToilet: (id=$id)")
+        return toiletRepository.deleteById(id)
     }
 }
