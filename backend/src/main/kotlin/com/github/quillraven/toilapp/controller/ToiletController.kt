@@ -36,7 +36,7 @@ class ToiletController {
         @RequestParam(required = false) y: Double?,
         @RequestParam(required = false) maxDistanceInMeters: Double?
     ): Flux<Toilet> {
-        LOG.debug("getNearbyToilets: (longitude=$x, latitude=$y, maxDistanceInMeters=$maxDistanceInMeters)")
+        LOG.debug("getNearbyToilets: (x=$x, y=$y, maxDistanceInMeters=$maxDistanceInMeters)")
         return when {
             x == null || y == null || maxDistanceInMeters == null -> {
                 toiletRepository.findAll()
