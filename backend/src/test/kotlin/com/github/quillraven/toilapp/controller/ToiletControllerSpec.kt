@@ -1,7 +1,7 @@
 package com.github.quillraven.toilapp.controller
 
-import ModelWithFields
-import ModelWithNoFields
+import com.github.quillraven.toilapp.model.ModelWithFields
+import com.github.quillraven.toilapp.model.ModelWithNoFields
 import org.amshove.kluent.`should be equal to`
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
