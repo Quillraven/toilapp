@@ -17,9 +17,14 @@ interface Comment {
     text: string
 }
 
+interface GeoPoint {
+    x: number
+    y: number
+}
+
 interface Toilet {
     title: string
-    location: string
+    location: GeoPoint
     preview: string
     rating: number
     disable: boolean
@@ -74,7 +79,7 @@ class ToiletList extends Component<ToiletListProps, ToiletListState> {
                             tableHeaderColor={"primary"}
                             tableHead={["Title", "Location", "Rating"]}
                             tableData={Toilets.map((toilet: Toilet) => (
-                                [`${toilet.title}`, `${toilet.location}`, `${toilet.rating}`]
+                                [`${toilet.title}`, `[${toilet.location.x},${toilet.location.y}]`, `${toilet.rating}`]
                             ))}
                         />
                     </CardBody>
