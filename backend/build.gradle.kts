@@ -5,6 +5,7 @@ plugins {
     id("io.spring.dependency-management") version "1.0.10.RELEASE"
     kotlin("jvm") version "1.4.0"
     kotlin("plugin.spring") version "1.4.0"
+    application
 }
 
 group = "com.github.quillraven"
@@ -26,6 +27,10 @@ dependencies {
     testImplementation("org.spekframework.spek2:spek-dsl-jvm:2.0.12")
     testRuntimeOnly("org.spekframework.spek2:spek-runner-junit5:2.0.12")
     testImplementation("org.amshove.kluent:kluent:1.61")
+}
+
+application {
+    mainClassName = "com.github.quillraven.toilapp.ToilappApplicationKt"
 }
 
 tasks.withType<Test> {
