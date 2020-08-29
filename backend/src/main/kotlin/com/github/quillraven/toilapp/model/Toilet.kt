@@ -4,7 +4,7 @@ import org.springframework.data.annotation.Id
 import org.springframework.data.mongodb.core.geo.GeoJsonPoint
 import org.springframework.data.mongodb.core.mapping.Document
 
-@Document
+@Document(collection = "toilets")
 data class Toilet(
     @Id
     val id: String = "",

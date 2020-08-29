@@ -1,5 +1,6 @@
 package com.github.quillraven.toilapp
 
+import org.slf4j.LoggerFactory
 import org.springframework.boot.web.error.ErrorAttributeOptions
 import org.springframework.boot.web.reactive.error.DefaultErrorAttributes
 import org.springframework.http.HttpStatus
@@ -7,12 +8,15 @@ import org.springframework.stereotype.Component
 import org.springframework.web.client.HttpStatusCodeException
 import org.springframework.web.reactive.function.server.ServerRequest
 
+private val LOG = LoggerFactory.getLogger(GlobalErrorAttributes::class.java)
+
 @Component
 class GlobalErrorAttributes : DefaultErrorAttributes() {
     override fun getErrorAttributes(request: ServerRequest?, options: ErrorAttributeOptions?): MutableMap<String, Any> {
         return super.getErrorAttributes(request, options).apply {
             val error = getError(request)
             if (error is ToilappException) {
+                LOG.error("ToilappException occurred", error)
                 this.replace("status", error.statusCode.value())
                 this.replace("error", error.statusCode.reasonPhrase)
                 this.replace("message", error.statusText)
