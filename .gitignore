@@ -54,3 +54,4 @@ yarn-error.log*
 
 frontend/public
 package-lock.json
+/db-data
