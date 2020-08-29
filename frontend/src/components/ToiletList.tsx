@@ -38,6 +38,7 @@ interface ToiletListProps {
 }
 
 interface ToiletListState {
+    image: any,
     Toilets: Array<Toilet>;
     isLoading: boolean;
 }
@@ -48,6 +49,7 @@ class ToiletList extends Component<ToiletListProps, ToiletListState> {
         super(props);
 
         this.state = {
+            image: null,
             Toilets: [],
             isLoading: false
         };
@@ -56,9 +58,19 @@ class ToiletList extends Component<ToiletListProps, ToiletListState> {
     async componentDidMount() {
         this.setState({isLoading: true});
 
-        const response = await fetch('http://localhost:3000/api/toilets');
-        const data = await response.json();
-        this.setState({Toilets: data, isLoading: false});
+        const responseToilets = await fetch('http://localhost:3000/api/toilets');
+        const toiletData: Toilet[] = await responseToilets.json();
+
+        this.setState({Toilets: toiletData, isLoading: false});
+    }
+
+    async getImage() {
+        fetch('http://localhost:3000/api/previews/5f4a65c642ce3b12422f66ab')
+            .then(responsePreview => responsePreview.json())
+            .then(data => {
+                console.log(`ImageData: ${data}`)
+                this.setState({image: data})
+            })
     }
 
     render() {
@@ -75,11 +87,16 @@ class ToiletList extends Component<ToiletListProps, ToiletListState> {
                         <h4 className={"cardTitle"}>Toilets</h4>
                     </CardHeader>
                     <CardBody>
+                        <img src={"data:image/png;base64," + this.getImage()} alt="test"/>
                         <CustomTable
                             tableHeaderColor={"primary"}
                             tableHead={["Title", "Location", "Rating"]}
                             tableData={Toilets.map((toilet: Toilet) => (
-                                [`${toilet.title}`, `[${toilet.location.x},${toilet.location.y}]`, `${toilet.rating}`]
+                                [
+                                    `${toilet.title}`,
+                                    `[${toilet.location.x},${toilet.location.y}]`,
+                                    `${toilet.rating}`
+                                ]
                             ))}
                         />
                     </CardBody>
