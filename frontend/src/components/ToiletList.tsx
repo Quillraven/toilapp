@@ -1,9 +1,8 @@
-import React, {Component} from 'react';
-import CustomTable from "./Table/Table";
-import Card from "./Card/Card"
-import GridItem from "./Grid/GridItem"
-import CardHeader from "./Card/CardHeader";
-import CardBody from "./Card/CardBody";
+import React from 'react';
+import { Toilet, MockToiletService, ToiletService } from '../services/ToiletService';
+import ToiletCard from './ToiletCard';
+import { makeStyles, Theme, createStyles } from '@material-ui/core/styles';
+import { GridList, GridListTile } from '@material-ui/core';
 
 interface User {
     id: string
@@ -17,76 +16,51 @@ interface Comment {
     text: string
 }
 
-interface GeoPoint {
-    x: number
-    y: number
-}
-
-interface Toilet {
-    title: string
-    location: GeoPoint
-    preview: string
-    rating: number
-    disable: boolean
-    toiletCrewApproved: boolean
-    description: string
-    comments: Array<Comment>
-    images: Array<string>
-}
-
 interface ToiletListProps {
 }
 
-interface ToiletListState {
-    Toilets: Array<Toilet>;
-    isLoading: boolean;
-}
+const useStyles = makeStyles((theme: Theme) =>
+  createStyles({
+    root: {
+      display: 'flex',
+      flexWrap: 'wrap',
+      justifyContent: 'space-around',
+      overflow: 'hidden',
+      backgroundColor: theme.palette.background.paper,
+    },
+    gridList: {
+      width: 1000
+    },
+    icon: {
+      color: 'rgba(255, 255, 255, 0.54)',
+    },
+  }),
+);
 
-class ToiletList extends Component<ToiletListProps, ToiletListState> {
-
-    constructor(props: ToiletListProps) {
-        super(props);
-
-        this.state = {
-            Toilets: [],
-            isLoading: false
-        };
-    }
-
-    async componentDidMount() {
-        this.setState({isLoading: true});
-
-        const response = await fetch('http://localhost:3000/api/toilets');
-        const data = await response.json();
-        this.setState({Toilets: data, isLoading: false});
-    }
-
-    render() {
-        const {Toilets, isLoading} = this.state;
-
-        if (isLoading) {
-            return <p>Fetching toilets...</p>;
+export default function ToiletList() {
+    const classes = useStyles();
+    const [toilets, setToilets] = React.useState<Toilet[]>([]);
+    const service: ToiletService = new MockToiletService();
+    
+    React.useEffect(() => {
+        const loadToilets = async function() {
+            console.log("load toilets");
+            const toiletList: Toilet[] = await service.getToilets();
+            console.log("toilets loaded");
+            setToilets(toiletList);
         }
+        loadToilets();
+    }, []);
 
-        return (
-            <GridItem>
-                <Card>
-                    <CardHeader color={"danger"}>
-                        <h4 className={"cardTitle"}>Toilets</h4>
-                    </CardHeader>
-                    <CardBody>
-                        <CustomTable
-                            tableHeaderColor={"primary"}
-                            tableHead={["Title", "Location", "Rating"]}
-                            tableData={Toilets.map((toilet: Toilet) => (
-                                [`${toilet.title}`, `[${toilet.location.x},${toilet.location.y}]`, `${toilet.rating}`]
-                            ))}
-                        />
-                    </CardBody>
-                </Card>
-            </GridItem>
-        );
-    }
+    return (
+        <GridList cellHeight={350} className={classes.gridList} cols={3}>
+            {toilets.map((toilet) => (
+                <GridListTile key={toilet.title}>
+                    <ToiletCard toilet={toilet} />
+                </GridListTile>
+            ))}
+        </GridList>
+    );
 }
 
-export default ToiletList;
+
