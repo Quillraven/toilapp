@@ -44,8 +44,8 @@ class ToiletController {
     fun updateToilet(@PathVariable id: String, @RequestBody toilet: Toilet): Mono<Toilet> {
         LOG.debug("updateToilet: (id=$id, toilet=$toilet)")
         return toiletRepository.findById(id)
-            .flatMap { toiletRepository.save(toilet.copy(id = id)) }
             .switchIfEmpty(Mono.error(ToiletDoesNotExistException(id)))
+            .flatMap { toiletRepository.save(toilet.copy(id = id)) }
     }
 
     @GetMapping("/toilets")

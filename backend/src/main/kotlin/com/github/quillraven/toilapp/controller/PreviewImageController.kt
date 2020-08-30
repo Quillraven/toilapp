@@ -1,5 +1,6 @@
 package com.github.quillraven.toilapp.controller
 
+import com.github.quillraven.toilapp.PreviewImageDoesNotExistException
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
@@ -30,41 +31,51 @@ class PreviewImageController {
 
     @PostMapping("/previews")
     fun createPreviewImage(@RequestPart("file") file: Mono<FilePart>): Mono<ResponseEntity<Map<String, String>>> {
-        return file.flatMap { filePart ->
-            LOG.debug(
-                "createPreviewImage: (filename=${filePart.filename()}, contentType=${filePart.headers().contentType})"
-            )
-            gridFsTemplate.store(
-                filePart.content(),
-                filePart.filename(),
-                filePart.headers().contentType.toString()
-            )
-                .map {
-                    LOG.debug("Preview image created with id: ${it.toHexString()}")
-                    ok(mapOf("id" to it.toHexString()))
-                }
-        }
+        return file
+            .flatMap { filePart ->
+                LOG.debug(
+                    "createPreviewImage: (filename=${filePart.filename()}, contentType=${filePart.headers().contentType})"
+                )
+                gridFsTemplate.store(
+                    filePart.content(),
+                    filePart.filename(),
+                    filePart.headers().contentType.toString()
+                )
+            }
+            .map { objectId ->
+                LOG.debug("Preview image created with id: ${objectId.toHexString()}")
+                ok(mapOf("id" to objectId.toHexString()))
+            }
     }
 
     @GetMapping("/previews/{id}")
     @ResponseBody
     fun getPreviewImage(@PathVariable id: String): Mono<ResponseEntity<ByteArray>> {
         LOG.debug("getPreviewImage: $id")
-        return gridFsTemplate.findOne(Query.query(Criteria.where("_id").`is`(id)))
+        var fileLength = 0L
+        var contentType = MediaType.ALL
+
+        return gridFsTemplate
+            // get file
+            .findOne(Query.query(Criteria.where("_id").`is`(id)))
+            .switchIfEmpty(Mono.error(PreviewImageDoesNotExistException(id)))
+            // get content type, file size and resource (=chunks)
             .flatMap { gridFsFile ->
-                val contentType = MediaType.parseMediaType(gridFsFile.metadata?.getString("_contentType") ?: "")
-                LOG.debug("Getting resource of file |${gridFsFile.filename}| with length |${gridFsFile.length}|")
-                LOG.debug("Resource has type |$contentType|")
-                gridFsTemplate.getResource(gridFsFile).flatMap { reactiveGridFsResource ->
-                    LOG.debug("Found resource")
-                    reactiveGridFsResource.inputStream.map { inputStream ->
-                        LOG.debug("Reading file via InputStream")
-                        val bytes = ByteArray(gridFsFile.length.toInt())
-                        inputStream.use { it.read(bytes) }
-                        ok().contentLength(gridFsFile.length)
-                            .contentType(contentType)
-                            .body(bytes)
-                    }
+                contentType = MediaType.parseMediaType(gridFsFile.metadata?.getString("_contentType") ?: "")
+                fileLength = gridFsFile.length
+                LOG.debug("Getting resource of file |${gridFsFile.filename}| with length |${fileLength}| and contentType |$contentType|")
+                gridFsTemplate.getResource(gridFsFile)
+            }
+            // open input stream to retrieve file content
+            .flatMap { reactiveGridFsResource ->
+                reactiveGridFsResource.inputStream
+            }
+            // read input stream into byte array
+            .map { inputStream ->
+                inputStream.use {
+                    ok().contentLength(fileLength)
+                        .contentType(contentType)
+                        .body(it.readBytes())
                 }
             }
     }
