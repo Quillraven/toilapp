@@ -60,10 +60,7 @@ class PreviewImageController {
                     reactiveGridFsResource.inputStream.map { inputStream ->
                         LOG.debug("Reading file via InputStream")
                         val bytes = ByteArray(gridFsFile.length.toInt())
-                        inputStream.run {
-                            read(bytes)
-                            close()
-                        }
+                        inputStream.use { it.read(bytes) }
                         ok().contentLength(gridFsFile.length)
                             .contentType(contentType)
                             .body(bytes)
