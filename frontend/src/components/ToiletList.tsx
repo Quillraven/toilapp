@@ -60,21 +60,19 @@ class ToiletList extends Component<ToiletListProps, ToiletListState> {
 
         const responseToilets = await fetch('http://localhost:3000/api/toilets');
         const toiletData: Toilet[] = await responseToilets.json();
+        const responseImage = await fetch('http://localhost:3000/api/previews/5f4a65c642ce3b12422f66ab')
+        const imageBlob = await responseImage.blob()
+        console.log(`HALLOOOOOOOO2222 ${imageBlob}`)
 
-        this.setState({Toilets: toiletData, isLoading: false});
-    }
-
-    async getImage() {
-        fetch('http://localhost:3000/api/previews/5f4a65c642ce3b12422f66ab')
-            .then(responsePreview => responsePreview.json())
-            .then(data => {
-                console.log(`ImageData: ${data}`)
-                this.setState({image: data})
-            })
+        this.setState({
+            Toilets: toiletData,
+            isLoading: false,
+            image: URL.createObjectURL(imageBlob)
+        });
     }
 
     render() {
-        const {Toilets, isLoading} = this.state;
+        const {Toilets, isLoading, image} = this.state;
 
         if (isLoading) {
             return <p>Fetching toilets...</p>;
@@ -87,7 +85,7 @@ class ToiletList extends Component<ToiletListProps, ToiletListState> {
                         <h4 className={"cardTitle"}>Toilets</h4>
                     </CardHeader>
                     <CardBody>
-                        <img src={"data:image/png;base64," + this.getImage()} alt="test"/>
+                        {<img src={image} alt="test"/>}
                         <CustomTable
                             tableHeaderColor={"primary"}
                             tableHead={["Title", "Location", "Rating"]}

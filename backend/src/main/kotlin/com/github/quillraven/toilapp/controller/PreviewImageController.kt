@@ -5,7 +5,6 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query
-import org.springframework.data.mongodb.gridfs.ReactiveGridFsResource
 import org.springframework.data.mongodb.gridfs.ReactiveGridFsTemplate
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
@@ -49,18 +48,26 @@ class PreviewImageController {
 
     @GetMapping("/previews/{id}")
     @ResponseBody
-    fun getPreviewImage(@PathVariable id: String): Mono<ResponseEntity<ReactiveGridFsResource>> {
+    fun getPreviewImage(@PathVariable id: String): Mono<ResponseEntity<ByteArray>> {
         LOG.debug("getPreviewImage: $id")
         return gridFsTemplate.findOne(Query.query(Criteria.where("_id").`is`(id)))
             .flatMap { gridFsFile ->
                 val contentType = MediaType.parseMediaType(gridFsFile.metadata?.getString("_contentType") ?: "")
                 LOG.debug("Getting resource of file |${gridFsFile.filename}| with length |${gridFsFile.length}|")
                 LOG.debug("Resource has type |$contentType|")
-                gridFsTemplate.getResource(gridFsFile).map {
-                    ok().contentLength(gridFsFile.length)
-                        // next line causes No Encoder for ReactiveGridFsResource with preset contenttype image/png error
-                        // .contentType(contentType)
-                        .body(it)
+                gridFsTemplate.getResource(gridFsFile).flatMap { reactiveGridFsResource ->
+                    LOG.debug("Found resource")
+                    reactiveGridFsResource.inputStream.map { inputStream ->
+                        LOG.debug("Reading file via InputStream")
+                        val bytes = ByteArray(gridFsFile.length.toInt())
+                        inputStream.run {
+                            read(bytes)
+                            close()
+                        }
+                        ok().contentLength(gridFsFile.length)
+                            .contentType(contentType)
+                            .body(bytes)
+                    }
                 }
             }
     }
