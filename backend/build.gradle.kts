@@ -27,6 +27,7 @@ dependencies {
     testImplementation("org.spekframework.spek2:spek-dsl-jvm:2.0.12")
     testRuntimeOnly("org.spekframework.spek2:spek-runner-junit5:2.0.12")
     testImplementation("org.amshove.kluent:kluent:1.61")
+    testImplementation("io.mockk:mockk:1.10.0")
 }
 
 application {
