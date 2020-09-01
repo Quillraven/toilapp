@@ -1,13 +1,50 @@
 package com.github.quillraven.toilapp.controller
 
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.github.quillraven.toilapp.model.ModelWithFields
 import com.github.quillraven.toilapp.model.ModelWithNoFields
+import com.github.quillraven.toilapp.model.Toilet
+import com.github.quillraven.toilapp.repository.ToiletRepository
+import com.github.quillraven.toilapp.service.IToiletService
+import com.github.quillraven.toilapp.service.ToiletService
+import io.mockk.every
+import io.mockk.mockk
 import org.amshove.kluent.`should be equal to`
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
+import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest
+import org.springframework.data.mongodb.core.geo.GeoJsonModule
+import org.springframework.http.MediaType
+import org.springframework.http.codec.json.Jackson2JsonDecoder
+import org.springframework.http.codec.json.Jackson2JsonEncoder
+import org.springframework.test.web.reactive.server.WebTestClient
+import org.springframework.test.web.reactive.server.returnResult
+import reactor.core.publisher.Flux
+import reactor.test.StepVerifier
 
-@Suppress("unused")
+@WebFluxTest(controllers = [ToiletController::class])
 object ToiletControllerSpec : Spek({
+    val toiletRepository: ToiletRepository by memoized { mockk() }
+    val toiletService: IToiletService by memoized { ToiletService(toiletRepository) }
+    val client by memoized {
+        WebTestClient
+            .bindToController(ToiletController(toiletService))
+            .build()
+            .mutateWith { builder, _, _ ->
+                builder.codecs {
+                    val objectMapper = jacksonObjectMapper().apply {
+                        registerModule(GeoJsonModule())
+                    }
+                    it.defaultCodecs().jackson2JsonEncoder(
+                        Jackson2JsonEncoder(objectMapper)
+                    )
+                    it.defaultCodecs().jackson2JsonDecoder(
+                        Jackson2JsonDecoder(objectMapper)
+                    )
+                }
+            }
+    }
+
     describe("A ToiletController") {
         describe("Retrieving non-null fields of a class with zero null non-null fields") {
             it("should return an empty array") {
@@ -29,6 +66,23 @@ object ToiletControllerSpec : Spek({
 
                 expected `should be equal to` arrayOf("field1")
             }
+        }
+
+        it("should return flux with two toilets") {
+            every { toiletRepository.findAll() } returns Flux.just(Toilet(id = "1"), Toilet(id = "2"))
+
+            val result = client.get().uri("/api/toilets")
+                .accept(MediaType.TEXT_EVENT_STREAM)
+                .exchange()
+                .expectStatus().isOk
+                .returnResult<Toilet>()
+                .responseBody
+
+            StepVerifier.create(result)
+                .expectNext(Toilet(id = "1"))
+                .expectNext(Toilet(id = "2"))
+                .expectComplete()
+                .verify()
         }
     }
 })
