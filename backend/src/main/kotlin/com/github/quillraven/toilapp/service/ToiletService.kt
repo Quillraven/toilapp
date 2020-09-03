@@ -44,6 +44,8 @@ class ToiletService(private val toiletRepository: ToiletRepository) : IToiletSer
 
     override fun delete(id: String): Mono<Void> {
         LOG.debug("delete: (id=$id)")
-        return toiletRepository.deleteById(id)
+        return toiletRepository.findById(id)
+            .switchIfEmpty(Mono.error(ToiletDoesNotExistException(id)))
+            .flatMap { toiletRepository.deleteById(id) }
     }
 }
