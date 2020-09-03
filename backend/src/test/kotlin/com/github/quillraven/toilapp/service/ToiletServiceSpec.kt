@@ -7,6 +7,7 @@ import io.mockk.every
 import io.mockk.mockk
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
+import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import reactor.test.StepVerifier
 
@@ -44,6 +45,51 @@ object ToiletServiceSpec : Spek({
 
             StepVerifier
                 .create(toiletService.update("1", Toilet()))
+                .expectErrorMatches {
+                    it is ToiletDoesNotExistException
+                            && it.message == "404 Toilet of id |1| does not exist!"
+                }
+                .verify()
+        }
+
+        it("should return two toilets") {
+            val toilet1 = Toilet(id = "1")
+            val toilet2 = Toilet(id = "2")
+            every { toiletRepository.findAll() } returns Flux.just(toilet1, toilet2)
+
+            StepVerifier
+                .create(toiletService.getAll())
+                .expectNext(toilet1)
+                .expectNext(toilet2)
+                .expectComplete()
+                .verify()
+        }
+
+        it("should return empty Flux") {
+            every { toiletRepository.findAll() } returns Flux.empty()
+
+            StepVerifier
+                .create(toiletService.getAll())
+                .expectComplete()
+                .verify()
+        }
+
+        it("should return Mono<Void>") {
+            every { toiletRepository.findById(any<String>()) } returns Mono.just(Toilet(id = "1"))
+            every { toiletRepository.deleteById(any<String>()) } returns Mono.empty()
+
+            StepVerifier
+                .create(toiletService.delete("1"))
+                .expectComplete()
+                .verify()
+        }
+
+        it("should throw ToiletDoesNotExistException") {
+            every { toiletRepository.findById(any<String>()) } returns Mono.empty()
+            every { toiletRepository.deleteById(any<String>()) } returns Mono.empty()
+
+            StepVerifier
+                .create(toiletService.delete("1"))
                 .expectErrorMatches {
                     it is ToiletDoesNotExistException
                             && it.message == "404 Toilet of id |1| does not exist!"
