@@ -33,3 +33,6 @@ class ToiletDoesNotExistException(id: String) :
 
 class PreviewImageDoesNotExistException(id: String) :
     ToilappException(HttpStatus.NOT_FOUND, "Preview image of id |$id| does not exist!")
+
+class UnsupportedImageContentTypeException(fileName: String) :
+    ToilappException(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "Image |$fileName| has an unsupported type!")
