@@ -3,6 +3,8 @@ package com.github.quillraven.toilapp.service
 import com.github.quillraven.toilapp.PreviewImageDoesNotExistException
 import com.github.quillraven.toilapp.UnsupportedImageContentTypeException
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query
 import org.springframework.data.mongodb.gridfs.ReactiveGridFsTemplate
@@ -19,7 +21,11 @@ interface IImageService {
 private val LOG = LoggerFactory.getLogger(ImageService::class.java)
 
 @Service
-class ImageService(private val gridFsTemplate: ReactiveGridFsTemplate) : IImageService {
+class ImageService(
+    @Autowired
+    @Qualifier("reactiveGridFsTemplateForImages")
+    private val gridFsTemplate: ReactiveGridFsTemplate
+) : IImageService {
     override fun create(filePartMono: Mono<FilePart>): Mono<String> {
         return filePartMono
             .flatMap { filePart ->
