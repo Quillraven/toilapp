@@ -1,15 +1,56 @@
-version: '3'
+version: '3.8'
 
 services:
-  mongodb:
+  mongo:
     image: mongo
-    env_file:
-      - .env
+    hostname: mongo.
+    ports:
+      - 27017:27017
+    networks:
+      default:
+        aliases:
+          - mongo.repl
     volumes:
-      - ./db-data:/data/db
-
-  backend:
-    build: backend
+      - ./db-data:/data/db1
+    command:
+      - --storageEngine
+      - wiredTiger
+      - --replSet
+      - repl
     depends_on:
-      - mongodb
+      - mongo-2
+      - mongo-3
 
+  mongo-2:
+    image: mongo
+    hostname: mongo-2.repl
+    ports:
+      - 27018:27017
+    networks:
+      default:
+        aliases:
+          - mongo-2.repl
+    volumes:
+      - ./db-data:/data/db2
+    command:
+      - --storageEngine
+      - wiredTiger
+      - --replSet
+      - repl
+
+  mongo-3:
+    image: mongo
+    hostname: mongo-3.repl
+    ports:
+      - 27019:27017
+    networks:
+      default:
+        aliases:
+          - mongo-3.repl
+    volumes:
+      - ./db-data:/data/db3
+    command:
+      - --storageEngine
+      - wiredTiger
+      - --replSet
+      - repl
