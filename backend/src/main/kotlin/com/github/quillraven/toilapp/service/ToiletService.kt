@@ -12,6 +12,7 @@ interface IToiletService {
     fun create(toilet: Toilet): Mono<Toilet>
     fun update(id: String, toilet: Toilet): Mono<Toilet>
     fun getNearbyToilets(x: Double, y: Double, maxDistanceInMeters: Double): Flux<Toilet>
+    fun getById(id: String): Mono<Toilet>
     fun getAll(): Flux<Toilet>
     fun delete(id: String): Mono<Void>
 }
@@ -27,14 +28,20 @@ class ToiletService(private val toiletRepository: ToiletRepository) : IToiletSer
 
     override fun update(id: String, toilet: Toilet): Mono<Toilet> {
         LOG.debug("update: (id=$id, toilet=$toilet)")
-        return toiletRepository.findById(id)
+        return getById(id)
             .flatMap { toiletRepository.save(toilet.copy(id = id)) }
-            .switchIfEmpty(Mono.error(ToiletDoesNotExistException(id)))
     }
 
     override fun getNearbyToilets(x: Double, y: Double, maxDistanceInMeters: Double): Flux<Toilet> {
         LOG.debug("getNearbyToilets: (x=$x, y=$y, maxDistanceInMeters=$maxDistanceInMeters)")
         return toiletRepository.getNearbyToilets(x, y, maxDistanceInMeters)
+    }
+
+    override fun getById(id: String): Mono<Toilet> {
+        LOG.debug("getById: (id=$id)")
+        return toiletRepository
+            .findById(id)
+            .switchIfEmpty(Mono.error(ToiletDoesNotExistException(id)))
     }
 
     override fun getAll(): Flux<Toilet> {
