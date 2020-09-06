@@ -26,7 +26,7 @@ class PreviewImageController(
     private val toiletService: IToiletService,
 ) {
     @PostMapping("/previews")
-    // @Transactional
+    @Transactional
     fun createPreviewImage(
         @RequestPart("file") file: Mono<FilePart>,
         @RequestParam("toiletId") toiletId: String,
