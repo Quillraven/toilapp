@@ -25,6 +25,8 @@ class PreviewImageController(
     @Autowired
     private val toiletService: IToiletService,
 ) {
+    // TODO Transactional is currently not supported by GridFS and therefore we could potentially create images that are not
+    // linked to any toilet -> let's fix that later ;)
     @PostMapping("/previews")
     @Transactional
     fun createPreviewImage(
@@ -39,7 +41,7 @@ class PreviewImageController(
                 imageService.create(file)
             }
             .flatMap { fileID ->
-                toiletService.update(toiletToUpdate.id, toiletToUpdate.copy(preview = fileID))
+                toiletService.update(toiletToUpdate.id, toiletToUpdate.copy(previewID = fileID))
             }
     }
 

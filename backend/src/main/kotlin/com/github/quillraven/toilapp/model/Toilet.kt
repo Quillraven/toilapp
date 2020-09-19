@@ -10,7 +10,7 @@ data class Toilet(
     val id: String = "",
     val title: String = "",
     val location: GeoJsonPoint = GeoJsonPoint(0.0, 0.0),
-    val preview: String = "",
+    val previewID: String = "",
     val rating: Int = 0,
     val disabled: Boolean = false,
     val toiletCrewApproved: Boolean = false,
