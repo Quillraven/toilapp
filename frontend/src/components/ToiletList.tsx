@@ -1,8 +1,8 @@
-import React, {Component} from 'react';
-import Card from "./Card/Card"
-import GridItem from "./Grid/GridItem"
-import CardHeader from "./Card/CardHeader";
-import CardBody from "./Card/CardBody";
+import React from 'react';
+import { Toilet, MockToiletService, ToiletService } from '../services/ToiletService';
+import ToiletCard from './ToiletCard';
+import { makeStyles, Theme, createStyles } from '@material-ui/core/styles';
+import { GridList, GridListTile } from '@material-ui/core';
 
 interface User {
     id: string
@@ -16,101 +16,51 @@ interface Comment {
     text: string
 }
 
-interface GeoPoint {
-    x: number
-    y: number
-}
-
-interface Toilet {
-    title: string
-    location: GeoPoint
-    preview: string
-    image: any
-    rating: number
-    disable: boolean
-    toiletCrewApproved: boolean
-    description: string
-    comments: Array<Comment>
-    images: Array<string>
-}
-
 interface ToiletListProps {
 }
 
-interface ToiletListState {
-    Toilets: Array<Toilet>;
-    isLoading: boolean;
+const useStyles = makeStyles((theme: Theme) =>
+  createStyles({
+    root: {
+      display: 'flex',
+      flexWrap: 'wrap',
+      justifyContent: 'space-around',
+      overflow: 'hidden',
+      backgroundColor: theme.palette.background.paper,
+    },
+    gridList: {
+      width: 1000
+    },
+    icon: {
+      color: 'rgba(255, 255, 255, 0.54)',
+    },
+  }),
+);
+
+export default function ToiletList() {
+    const classes = useStyles();
+    const [toilets, setToilets] = React.useState<Toilet[]>([]);
+    const service: ToiletService = new MockToiletService();
+
+    React.useEffect(() => {
+        const loadToilets = async function() {
+            console.log("load toilets");
+            const toiletList: Toilet[] = await service.getToilets();
+            console.log("toilets loaded");
+            setToilets(toiletList);
+        }
+        loadToilets();
+    }, []);
+
+    return (
+        <GridList cellHeight={350} className={classes.gridList} cols={3}>
+            {toilets.map((toilet) => (
+                <GridListTile key={toilet.title}>
+                    <ToiletCard toilet={toilet} />
+                </GridListTile>
+            ))}
+        </GridList>
+    );
 }
 
-class ToiletList extends Component<ToiletListProps, ToiletListState> {
 
-    constructor(props: ToiletListProps) {
-        super(props);
-
-        this.state = {
-            Toilets: [],
-            isLoading: false
-        };
-    }
-
-    async componentDidMount() {
-        this.setState({isLoading: true});
-
-        const responseToilets = await fetch('http://localhost:3000/api/toilets');
-        const toiletData: Toilet[] = await responseToilets.json();
-        for (const toilet of toiletData.filter(it => it.preview)) {
-            const responseImage = await fetch(`http://localhost:3000/api/previews/${toilet.preview}`)
-            const imageBlob = await responseImage.blob()
-            toilet.image = URL.createObjectURL(imageBlob)
-        }
-
-        this.setState({
-            Toilets: toiletData,
-            isLoading: false,
-        });
-    }
-
-    render() {
-        const {Toilets, isLoading} = this.state;
-
-        if (isLoading) {
-            return <p>Fetching toilets...</p>;
-        }
-
-        return (
-            <GridItem>
-                <Card>
-                    <CardHeader color={"danger"}>
-                        <h4 className={"cardTitle"}>Toilets</h4>
-                    </CardHeader>
-                    <CardBody>
-                        <table>
-                            <thead>
-                            <tr>
-                                <th>Image</th>
-                                <th>Title</th>
-                                <th>Location</th>
-                                <th>Rating</th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            {Toilets.map((toilet: Toilet) => (
-                                <tr>
-                                    <td>
-                                        <img src={toilet.image} alt={toilet.title} width={150} height={150}/>
-                                    </td>
-                                    <td>{toilet.title}</td>
-                                    <td>[{toilet.location.x},{toilet.location.y}]</td>
-                                    <td>{toilet.rating}</td>
-                                </tr>
-                            ))}
-                            </tbody>
-                        </table>
-                    </CardBody>
-                </Card>
-            </GridItem>
-        );
-    }
-}
-
-export default ToiletList;
