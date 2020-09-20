@@ -1,12 +1,12 @@
 import React from 'react';
 import './App.css';
-import ToiletList from "./components/ToiletList";
+import ToiletOverview from "./components/ToiletOverview";
 
 function App() {
   return (
     <div className="App">
       <header className="App-header">
-        <ToiletList />
+        <ToiletOverview />
       </header>
     </div>
   );
