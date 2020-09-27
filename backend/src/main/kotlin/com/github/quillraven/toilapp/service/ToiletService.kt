@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 
-interface IToiletService {
+interface ToiletService {
     fun create(toilet: Toilet): Mono<Toilet>
     fun update(id: String, toilet: Toilet): Mono<Toilet>
     fun getNearbyToilets(x: Double, y: Double, maxDistanceInMeters: Double): Flux<Toilet>
@@ -17,10 +17,10 @@ interface IToiletService {
     fun delete(id: String): Mono<Void>
 }
 
-private val LOG = LoggerFactory.getLogger(ToiletService::class.java)
-
 @Service
-class ToiletService(private val toiletRepository: ToiletRepository) : IToiletService {
+class DefaultToiletService(private val toiletRepository: ToiletRepository) : ToiletService {
+    private val LOG = LoggerFactory.getLogger(ToiletService::class.java)
+
     override fun create(toilet: Toilet): Mono<Toilet> {
         LOG.debug("create: $toilet")
         return toiletRepository.save(toilet)

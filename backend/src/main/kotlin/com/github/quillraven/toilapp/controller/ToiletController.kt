@@ -1,7 +1,7 @@
 package com.github.quillraven.toilapp.controller
 
 import com.github.quillraven.toilapp.model.Toilet
-import com.github.quillraven.toilapp.service.IToiletService
+import com.github.quillraven.toilapp.service.ToiletService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.web.bind.annotation.*
 import reactor.core.publisher.Flux
@@ -19,7 +19,7 @@ fun <T : Any> KClass<out T>.getNonNullProperties(vararg exceptions: KProperty1<T
 @RequestMapping("/api")
 class ToiletController(
     @Autowired
-    private val toiletService: IToiletService
+    private val toiletService: ToiletService
 ) {
     @PostMapping("/toilets")
     fun createToilet(@RequestBody toilet: Toilet) = toiletService.create(toilet)
