@@ -2,21 +2,22 @@ package com.github.quillraven.toilapp.model
 
 import org.springframework.data.annotation.Id
 import org.springframework.data.mongodb.core.geo.GeoJsonPoint
+import org.springframework.data.mongodb.core.mapping.DBRef
 import org.springframework.data.mongodb.core.mapping.Document
 
 @Document(collection = "toilets")
 data class Toilet(
-    @Id
+        @Id
     val id: String = "",
-    val title: String = "",
-    val location: GeoJsonPoint = GeoJsonPoint(0.0, 0.0),
-    val previewID: String = "",
-    val rating: Int = 0,
-    val disabled: Boolean = false,
-    val toiletCrewApproved: Boolean = false,
-    val description: String = "",
-    val comments: Array<Comment>? = null,
-    val images: Array<String>? = null
+        val title: String = "",
+        val location: GeoJsonPoint = GeoJsonPoint(0.0, 0.0),
+        val previewID: String = "",
+        val rating: Int = 0,
+        val disabled: Boolean = false,
+        val toiletCrewApproved: Boolean = false,
+        val description: String = "",
+        val comments: Array<Comment>? = arrayOf(),
+        val images: Array<String>? = arrayOf()
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

@@ -2,9 +2,12 @@ package com.github.quillraven.toilapp.service
 
 import com.github.quillraven.toilapp.PreviewImageDoesNotExistException
 import com.github.quillraven.toilapp.UnsupportedImageContentTypeException
+import org.bson.types.ObjectId
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
+import org.springframework.core.io.buffer.DataBufferUtils
+import org.springframework.core.io.buffer.DefaultDataBufferFactory
 import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query
 import org.springframework.data.mongodb.gridfs.ReactiveGridFsTemplate
@@ -12,6 +15,8 @@ import org.springframework.http.MediaType
 import org.springframework.http.codec.multipart.FilePart
 import org.springframework.stereotype.Service
 import reactor.core.publisher.Mono
+import java.io.InputStream
+import java.util.concurrent.Callable
 
 @Service
 class GrisFsImageService(
@@ -69,6 +74,11 @@ class GrisFsImageService(
             .map { inputStream ->
                 inputStream.use { it.readBytes() }
             }
+    }
+
+    override fun store(inStreamCallable: Callable<InputStream>, name: String): Mono<ObjectId> {
+        val flux = DataBufferUtils.readInputStream(inStreamCallable, DefaultDataBufferFactory(), DefaultDataBufferFactory.DEFAULT_INITIAL_CAPACITY);
+        return gridFsTemplate.store(flux, "myName");
     }
 
 }
