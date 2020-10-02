@@ -1,8 +1,8 @@
 package com.github.quillraven.toilapp.controller
 
 import com.github.quillraven.toilapp.model.Toilet
-import com.github.quillraven.toilapp.service.IImageService
-import com.github.quillraven.toilapp.service.IToiletService
+import com.github.quillraven.toilapp.service.ImageService
+import com.github.quillraven.toilapp.service.ToiletService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.http.codec.multipart.FilePart
@@ -20,10 +20,10 @@ import reactor.core.publisher.Mono
 @RestController
 @RequestMapping("/api")
 class PreviewImageController(
-    @Autowired
-    private val imageService: IImageService,
-    @Autowired
-    private val toiletService: IToiletService,
+        @Autowired
+    private val imageService: ImageService,
+        @Autowired
+    private val toiletService: ToiletService,
 ) {
     // TODO Transactional is currently not supported by GridFS and therefore we could potentially create images that are not
     // linked to any toilet -> let's fix that later ;)
