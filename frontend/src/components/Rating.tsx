@@ -1,5 +1,5 @@
 import React from 'react';
-import Grid from '@material-ui/core/Grid';
+import Box from '@material-ui/core/Box';
 
 export function RatingView(props: { rating: number, size?: string }) {
     let size = props.size ? props.size : 'M';
@@ -7,11 +7,11 @@ export function RatingView(props: { rating: number, size?: string }) {
     let sizeNum = getSizeNum(size);
 
     return (
-        <Grid container justify="center" spacing={10}>
+        <Box display="flex" flex={1} flexDirection="row" justifyContent="center">
             {[0, 1, 2, 3, 4].map((idx) => (
                 <div style={{ width: sizeNum, height: sizeNum }}><RatingElement rating={props.rating} index={idx} /></div>
             ))}
-        </Grid>
+        </Box>
     );
 
 }
@@ -35,7 +35,7 @@ export function RatingSelect(props: { rating?: number, size?: string, onRatingCh
     }
 
     return (
-        <Grid container justify="center" spacing={10}>
+        <Box display="flex" flex="1" flexDirection="row" justifyContent="center">
             {[0, 1, 2, 3, 4].map((idx) => (
                 <div style={{ width: sizeNum, height: sizeNum }}
                     onClick={() => ratingLocked(idx)}
@@ -45,7 +45,7 @@ export function RatingSelect(props: { rating?: number, size?: string, onRatingCh
                     <RatingElement rating={displayRating} index={idx} />
                 </div>
             ))}
-        </Grid>
+        </Box>
     );
 }
 
