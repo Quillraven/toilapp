@@ -32,6 +32,7 @@ val descriptions = listOf(
 )
 val commentTexts = listOf( "It was a pleasure", "Pleasant shit. I'll come back for sure.")
 val userNames = listOf(
+        "user1",
         "namibian",
         "specialist",
         "homes",
@@ -67,7 +68,7 @@ class DataLoaderRunner(
             val imgName = "toilet" +  Random.nextInt(1, 10) + ".jpg"
             val title = titles[Random.nextInt(0, titles.size)]
             val description = descriptions[Random.nextInt(0, descriptions.size)]
-            val rating = Random.nextInt(1, 6)
+            val rating = Random.nextDouble(1.0, 6.0)
             val numCommands = Random.nextInt(0, 4)
             val comments = mutableListOf<Comment>()
             val log = Random.nextDouble(10.0, 20.0)

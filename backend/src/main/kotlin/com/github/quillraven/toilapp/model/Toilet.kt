@@ -12,7 +12,7 @@ data class Toilet(
         val title: String = "",
         val location: GeoJsonPoint = GeoJsonPoint(0.0, 0.0),
         val previewID: String = "",
-        val rating: Int = 0,
+        val rating: Double = 0.0, //mean rating -> Double
         val disabled: Boolean = false,
         val toiletCrewApproved: Boolean = false,
         val description: String = "",
