@@ -1,6 +1,7 @@
 import {createStyles, makeStyles, Theme} from "@material-ui/core/styles";
 import {Toilet} from "../services/ToiletService";
 import {
+    Box,
     Button,
     ExpansionPanel,
     ExpansionPanelActions,
@@ -10,6 +11,7 @@ import {
 } from "@material-ui/core";
 import React from "react";
 import ExpandMoreIcon from "@material-ui/icons/ExpandMore"
+import { RatingView } from "./Rating";
 
 const useStyles = makeStyles((theme: Theme) =>
     createStyles({
@@ -50,9 +52,9 @@ export default function ToiletPanel(props: ToiletPanelProps) {
                     </Typography>
                 </div>
                 <div className={classes.column}>
-                    <Typography className={classes.secondaryHeading}>
-                        Rating: {toilet.rating}
-                    </Typography>
+                    <Box display="flex" width="100%" height="100%" justifyItems="center" alignItems="center">
+                        <RatingView size="XS" rating={toilet.rating} />
+                    </Box>
                 </div>
                 <div className={classes.column}>
                     <Typography className={classes.hintHeading}>
