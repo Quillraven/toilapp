@@ -1,5 +1,6 @@
 package com.github.quillraven.toilapp.controller
 
+import com.github.quillraven.toilapp.dto.ToiletResultDto
 import com.github.quillraven.toilapp.model.Toilet
 import com.github.quillraven.toilapp.service.ToiletService
 import org.springframework.beans.factory.annotation.Autowired
@@ -29,16 +30,16 @@ class ToiletController(
 
     @GetMapping("/toilets")
     fun getNearbyToilets(
-        @RequestParam(required = false) x: Double?,
-        @RequestParam(required = false) y: Double?,
+        @RequestParam(required = false) lon: Double?,
+        @RequestParam(required = false) lat: Double?,
         @RequestParam(required = false) maxDistanceInMeters: Double?
-    ): Flux<Toilet> {
+    ): Flux<ToiletResultDto> {
         return when {
-            x == null || y == null || maxDistanceInMeters == null -> {
-                toiletService.getAll()
+            lon == null || lat == null || maxDistanceInMeters == null -> {
+                toiletService.getAll().map { ToiletResultDto(it, -1.0) }
             }
             else -> {
-                toiletService.getNearbyToilets(x, y, maxDistanceInMeters)
+                toiletService.getNearbyToilets(lon, lat, maxDistanceInMeters)
             }
         }
     }
