@@ -2,15 +2,16 @@ package com.github.quillraven.toilapp.model
 
 import org.springframework.data.annotation.Id
 import org.springframework.data.mongodb.core.geo.GeoJsonPoint
-import org.springframework.data.mongodb.core.mapping.DBRef
+import org.springframework.data.mongodb.core.index.GeoSpatialIndexType
+import org.springframework.data.mongodb.core.index.GeoSpatialIndexed
 import org.springframework.data.mongodb.core.mapping.Document
 
 @Document(collection = "toilets")
 data class Toilet(
         @Id
-    val id: String = "",
+        val id: String = "",
         val title: String = "",
-        val location: GeoJsonPoint = GeoJsonPoint(0.0, 0.0),
+        @GeoSpatialIndexed(name="location", type=GeoSpatialIndexType.GEO_2DSPHERE)val location: GeoJsonPoint,
         val previewID: String = "",
         val rating: Double = 0.0, //mean rating -> Double
         val disabled: Boolean = false,
