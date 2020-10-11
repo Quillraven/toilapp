@@ -6,6 +6,7 @@ import com.github.quillraven.toilapp.model.User
 import com.github.quillraven.toilapp.service.ImageService
 import com.github.quillraven.toilapp.service.ToiletService
 import com.github.quillraven.toilapp.service.UserService
+import org.bson.types.ObjectId
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.CommandLineRunner
 import org.springframework.boot.SpringApplication
@@ -85,8 +86,8 @@ class DataLoaderRunner(
         for(usrName in userNames) {
             val userName = userNames[Random.nextInt(0, userNames.size)]
             val email = "$userName@mail.com"
-            val user = User(UUID.randomUUID().toString(), userName, email)
-            userMonoList.add(userService.createUser(user))
+            val user = User(ObjectId.get(), userName, email)
+            userMonoList.add(userService.create(user))
         }
         return Flux.fromIterable(userMonoList).flatMap { it }.collectList()
     }
@@ -111,7 +112,7 @@ class DataLoaderRunner(
 
         for (i in 0..numCommands) {
             val user = userList[Random.nextInt(0, userList.size)]
-            val comment = Comment(UUID.randomUUID().toString(), user, Date(), commentTexts[Random.nextInt(0, commentTexts.size)])
+            val comment = Comment(ObjectId.get(), user, Date(), commentTexts[Random.nextInt(0, commentTexts.size)])
             comments.add(comment)
         }
 
@@ -119,7 +120,7 @@ class DataLoaderRunner(
         val objId = imgService.store(inStreamCallable, "my-name")
         return objId.flatMap { oid ->
             println("imgOid = $oid")
-            val toilet = Toilet(UUID.randomUUID().toString(), title, GeoJsonPoint(log, lat), oid.toHexString(), rating, disabled = false, toiletCrewApproved = false, description, comments.toTypedArray(), emptyArray())
+            val toilet = Toilet(ObjectId.get(), title, GeoJsonPoint(log, lat), oid.toHexString(), rating, disabled = false, toiletCrewApproved = false, description, comments, emptyArray())
             toiletService.create(toilet)
         }
     }
