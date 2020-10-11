@@ -46,12 +46,10 @@ class DefaultToiletService(private val toiletRepository: ToiletRepository) : Toi
     }
 
     private fun distanceToMeter(distance: Distance): Double {
-        if(distance.metric == Metrics.KILOMETERS) {
-            return distance.value * 1000
-        } else if(distance.metric == Metrics.MILES) {
-            return distance.value * 1609.34
-        } else {
-            return distance.value * 1000
+        return when (distance.metric) {
+            Metrics.KILOMETERS -> distance.value * 1000
+            Metrics.MILES ->  distance.value * 1609.34
+            else -> distance.value
         }
     }
 

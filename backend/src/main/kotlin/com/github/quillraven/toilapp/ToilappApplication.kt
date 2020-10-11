@@ -19,10 +19,11 @@ fun main(args: Array<String>) {
 }
 
 @Component
-class EventListenerExampleBean(val template: ReactiveMongoTemplate) {
+class GeoSpatialIndexCreatorBean(val template: ReactiveMongoTemplate) {
     @EventListener
     fun onApplicationEvent(event: ContextRefreshedEvent) {
-        template.indexOps(Toilet::class.java).ensureIndex(GeospatialIndex("location").typed(GeoSpatialIndexType.GEO_2DSPHERE))
-                .subscribe({println("GeoSpatial index created")})
+        template.indexOps(Toilet::class.java)
+                .ensureIndex(GeospatialIndex(Toilet::location.name).typed(GeoSpatialIndexType.GEO_2DSPHERE))
+                .subscribe { println("GeoSpatial index for ${Toilet::location.name} created") }
     }
 }
