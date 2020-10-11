@@ -3,6 +3,7 @@ package com.github.quillraven.toilapp.controller
 import com.github.quillraven.toilapp.model.Toilet
 import com.github.quillraven.toilapp.service.ImageService
 import com.github.quillraven.toilapp.service.ToiletService
+import org.bson.types.ObjectId
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.http.codec.multipart.FilePart
@@ -33,15 +34,13 @@ class PreviewImageController(
         @RequestPart("file") file: Mono<FilePart>,
         @RequestParam("toiletId") toiletId: String,
     ): Mono<Toilet> {
-        lateinit var toiletToUpdate: Toilet
         return toiletService
-            .getById(toiletId)
-            .flatMap { toilet ->
-                toiletToUpdate = toilet
-                imageService.create(file)
-            }
-            .flatMap { fileID ->
-                toiletService.update(toiletToUpdate.id, toiletToUpdate.copy(previewID = fileID))
+            .getById(ObjectId(toiletId))
+            .zipWith(imageService.create(file))
+            .flatMap {
+                val toilet = it.t1
+                val fileId = it.t2
+                toiletService.update(toilet.id, toilet.copy(previewID = fileId))
             }
     }
 
@@ -50,5 +49,5 @@ class PreviewImageController(
         produces = [MediaType.IMAGE_JPEG_VALUE, MediaType.IMAGE_PNG_VALUE]
     )
     @ResponseBody
-    fun getPreviewImage(@PathVariable id: String) = imageService.get(id)
+    fun getPreviewImage(@PathVariable id: String) = imageService.get(ObjectId(id))
 }

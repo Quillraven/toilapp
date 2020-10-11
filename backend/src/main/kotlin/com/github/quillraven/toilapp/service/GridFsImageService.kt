@@ -25,8 +25,6 @@ class GrisFsImageService(
     private val gridFsTemplate: ReactiveGridFsTemplate
 ) : ImageService {
 
-    private val LOG = LoggerFactory.getLogger(GrisFsImageService::class.java)
-
     override fun create(filePartMono: Mono<FilePart>): Mono<String> {
         return filePartMono
             .flatMap { filePart ->
@@ -56,12 +54,12 @@ class GrisFsImageService(
             .map { it.toHexString() }
     }
 
-    override fun get(id: String): Mono<ByteArray> {
+    override fun get(id: ObjectId): Mono<ByteArray> {
         LOG.debug("get: id=$id")
         return gridFsTemplate
             // get file
             .findOne(Query.query(Criteria.where("_id").`is`(id)))
-            .switchIfEmpty(Mono.error(PreviewImageDoesNotExistException(id)))
+            .switchIfEmpty(Mono.error(PreviewImageDoesNotExistException(id.toHexString())))
             // get content type, file size and resource (=chunks)
             .flatMap { gridFsFile ->
                 gridFsTemplate.getResource(gridFsFile)
@@ -77,8 +75,15 @@ class GrisFsImageService(
     }
 
     override fun store(inStreamCallable: Callable<InputStream>, name: String): Mono<ObjectId> {
-        val flux = DataBufferUtils.readInputStream(inStreamCallable, DefaultDataBufferFactory(), DefaultDataBufferFactory.DEFAULT_INITIAL_CAPACITY);
-        return gridFsTemplate.store(flux, "myName");
+        val flux = DataBufferUtils.readInputStream(
+            inStreamCallable,
+            DefaultDataBufferFactory(),
+            DefaultDataBufferFactory.DEFAULT_INITIAL_CAPACITY
+        )
+        return gridFsTemplate.store(flux, "myName")
     }
 
+    companion object {
+        private val LOG = LoggerFactory.getLogger(GrisFsImageService::class.java)
+    }
 }

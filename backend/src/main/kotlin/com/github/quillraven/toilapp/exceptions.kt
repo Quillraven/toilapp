@@ -36,3 +36,9 @@ class PreviewImageDoesNotExistException(id: String) :
 
 class UnsupportedImageContentTypeException(fileName: String) :
     ToilappException(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "Image |$fileName| has an unsupported type!")
+
+class UserDoesNotExistException(id: String) :
+    ToilappException(HttpStatus.NOT_FOUND, "User of id |$id| does not exist!")
+
+class CommentDoesNotExistException(id: String) :
+    ToilappException(HttpStatus.NOT_FOUND, "Comment of id |$id| does not exist!")

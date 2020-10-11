@@ -8,6 +8,6 @@ import java.util.concurrent.Callable
 
 interface ImageService {
     fun create(filePartMono: Mono<FilePart>): Mono<String>
-    fun get(id: String): Mono<ByteArray>
+    fun get(id: ObjectId): Mono<ByteArray>
     fun store(inStreamCallable: Callable<InputStream>, name: String): Mono<ObjectId>
 }
