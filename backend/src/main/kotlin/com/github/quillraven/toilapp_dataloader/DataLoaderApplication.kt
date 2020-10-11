@@ -9,22 +9,13 @@ import com.github.quillraven.toilapp.service.UserService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.CommandLineRunner
 import org.springframework.boot.SpringApplication
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
 import org.springframework.context.ConfigurableApplicationContext
-import org.springframework.context.annotation.Bean
-import org.springframework.context.annotation.ComponentScan
-import org.springframework.context.annotation.ComponentScan.*
-import org.springframework.context.annotation.Configuration
-import org.springframework.context.annotation.FilterType
-import org.springframework.data.mongodb.ReactiveMongoDatabaseFactory
-import org.springframework.data.mongodb.ReactiveMongoTransactionManager
-import org.springframework.data.mongodb.core.convert.MappingMongoConverter
 import org.springframework.data.mongodb.core.geo.GeoJsonPoint
-import org.springframework.data.mongodb.gridfs.ReactiveGridFsTemplate
 import org.springframework.data.mongodb.repository.config.EnableReactiveMongoRepositories
 import org.springframework.stereotype.Component
+import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import java.io.InputStream
 import java.util.*
@@ -64,11 +55,9 @@ val userNames = listOf(
         "pannikin"
 )
 
-@Configuration
-@EnableAutoConfiguration
 @EnableReactiveMongoRepositories(basePackages = ["com.github.quillraven.toilapp.repository"])
-@ComponentScan(
-        basePackages = ["com.github.quillraven.toilapp.model",  "com.github.quillraven.toilapp.repository",  "com.github.quillraven.toilapp.service",
+@SpringBootApplication(
+        scanBasePackages = ["com.github.quillraven.toilapp.model",  "com.github.quillraven.toilapp.repository",  "com.github.quillraven.toilapp.service",
             "com.github.quillraven.toilapp_dataloader"]
 )
 class DataLoaderApplication
@@ -90,7 +79,7 @@ class DataLoaderRunner(
         }
     }
 
-    private fun createUsers(): Mono<List<Any>> {
+    private fun createUsers(): Mono<List<User>> {
         val userMonoList = mutableListOf<Mono<User>>()
         //create users
         for(usrName in userNames) {
@@ -99,19 +88,19 @@ class DataLoaderRunner(
             val user = User(UUID.randomUUID().toString(), userName, email)
             userMonoList.add(userService.createUser(user))
         }
-        return Mono.zip(userMonoList){ uArr -> uArr.toList() }
+        return Flux.fromIterable(userMonoList).flatMap { it }.collectList()
     }
 
-    private fun createToilets(uList: List<Any>): Mono<List<Any>> {
+    private fun createToilets(uList: List<User>): Mono<List<Toilet>> {
         val toiletMonoList = mutableListOf<Mono<Toilet>>()
         for(num in 0 until numToilets) {
             toiletMonoList.add(createToilet(uList))
         }
-        return Mono.zip(toiletMonoList){ tArr -> tArr.toList()}
+        return Flux.fromIterable(toiletMonoList).flatMap { it }.collectList()
     }
 
-    private fun createToilet(uList: List<Any>): Mono<Toilet> {
-        val imgName = "toilet" +  Random.nextInt(1, 10) + ".jpg"
+    private fun createToilet(userList: List<User>): Mono<Toilet> {
+        val imgName = "toilet" + Random.nextInt(1, 10) + ".jpg"
         val title = titles[Random.nextInt(0, titles.size)]
         val description = descriptions[Random.nextInt(0, descriptions.size)]
         val rating = Random.nextDouble(1.0, 6.0)
@@ -120,22 +109,19 @@ class DataLoaderRunner(
         val log = Random.nextDouble(10.0, 20.0)
         val lat = Random.nextDouble(45.0, 55.0)
 
-        val userList = mutableListOf<User>()
-        userList.addAll(uList as List<User>)
-        for(i in 0..numCommands) {
-            val user = userList.get(Random.nextInt(0, userList.size))
+        for (i in 0..numCommands) {
+            val user = userList[Random.nextInt(0, userList.size)]
             val comment = Comment(UUID.randomUUID().toString(), user, Date(), commentTexts[Random.nextInt(0, commentTexts.size)])
             comments.add(comment)
         }
 
-        val inStreamCallable: Callable<InputStream> = Callable<InputStream>{ DataLoaderRunner::class.java.getResourceAsStream("/sample-images/$imgName")}
+        val inStreamCallable: Callable<InputStream> = Callable<InputStream> { DataLoaderRunner::class.java.getResourceAsStream("/sample-images/$imgName") }
         val objId = imgService.store(inStreamCallable, "my-name")
-        return objId.flatMap{oid -> run{
+        return objId.flatMap { oid ->
             println("imgOid = $oid")
-            val toilet = Toilet(UUID.randomUUID().toString(), title, GeoJsonPoint(log, lat), oid.toHexString(), rating,
-                    false, false, description, comments.toTypedArray(), emptyArray())
+            val toilet = Toilet(UUID.randomUUID().toString(), title, GeoJsonPoint(log, lat), oid.toHexString(), rating, disabled = false, toiletCrewApproved = false, description, comments.toTypedArray(), emptyArray())
             toiletService.create(toilet)
-        }}
+        }
     }
 }
 
