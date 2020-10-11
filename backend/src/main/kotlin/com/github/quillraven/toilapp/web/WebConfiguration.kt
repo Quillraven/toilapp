@@ -1,4 +1,4 @@
-package com.github.quillraven.toilapp.configuration
+package com.github.quillraven.toilapp.web
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.springframework.context.annotation.Bean
@@ -39,15 +39,4 @@ class WebConfiguration : WebFluxConfigurer, SpringDataJacksonModules {
             Jackson2JsonDecoder(objectMapper)
         )
     }
-
-    @Bean("reactiveGridFsTemplateForImages")
-    fun reactiveGridFsTemplateForImages(
-        reactiveMongoDbFactory: ReactiveMongoDatabaseFactory,
-        mappingMongoConverter: MappingMongoConverter
-    ) = ReactiveGridFsTemplate(reactiveMongoDbFactory, mappingMongoConverter, "images")
-
-    @Bean
-    fun reactiveMongoTransactionManager(
-        reactiveMongoDbFactory: ReactiveMongoDatabaseFactory
-    ) = ReactiveMongoTransactionManager(reactiveMongoDbFactory)
 }
