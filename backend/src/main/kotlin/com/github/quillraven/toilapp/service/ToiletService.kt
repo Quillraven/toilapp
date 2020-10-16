@@ -4,7 +4,11 @@ import com.github.quillraven.toilapp.ToiletDoesNotExistException
 import com.github.quillraven.toilapp.model.Toilet
 import com.github.quillraven.toilapp.repository.ToiletRepository
 import org.bson.types.ObjectId
+
 import org.slf4j.LoggerFactory
+import org.springframework.data.geo.Distance
+import org.springframework.data.geo.Metrics
+import org.springframework.data.geo.Point
 import org.springframework.stereotype.Service
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
@@ -20,6 +24,8 @@ interface ToiletService {
 
 @Service
 class DefaultToiletService(private val toiletRepository: ToiletRepository) : ToiletService {
+    private val LOG = LoggerFactory.getLogger(ToiletService::class.java)
+
     override fun create(toilet: Toilet): Mono<Toilet> {
         LOG.debug("create: $toilet")
         return toiletRepository.save(toilet)
@@ -31,9 +37,21 @@ class DefaultToiletService(private val toiletRepository: ToiletRepository) : Toi
             .flatMap { toiletRepository.save(toilet.copy(id = id)) }
     }
 
-    override fun getNearbyToilets(x: Double, y: Double, maxDistanceInMeters: Double): Flux<Toilet> {
+    override fun getNearbyToilets(x: Double, y: Double, maxDistanceInMeters: Double): Flux<ToiletResultDto> {
         LOG.debug("getNearbyToilets: (x=$x, y=$y, maxDistanceInMeters=$maxDistanceInMeters)")
-        return toiletRepository.getNearbyToilets(x, y, maxDistanceInMeters)
+        val position = Point(x, y)
+        val maxDistance = Distance(maxDistanceInMeters / 1000, Metrics.KILOMETERS)
+        //return toiletRepository.getNearbyToilets(x, y, maxDistanceInMeters)
+        val res = toiletRepository.findByLocationNear(position, maxDistance)
+        return res.map { r -> ToiletResultDto(r.content, distanceToMeter(r.distance)) }
+    }
+
+    private fun distanceToMeter(distance: Distance): Double {
+        return when (distance.metric) {
+            Metrics.KILOMETERS -> distance.value * 1000
+            Metrics.MILES -> distance.value * 1609.34
+            else -> distance.value
+        }
     }
 
     override fun getById(id: ObjectId): Mono<Toilet> {

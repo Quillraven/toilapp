@@ -1,5 +1,5 @@
 import {createStyles, makeStyles, Theme} from "@material-ui/core/styles";
-import {Toilet} from "../services/ToiletService";
+import {ToiletResult} from "../services/ToiletService";
 import {
     Box,
     Button,
@@ -36,43 +36,48 @@ const useStyles = makeStyles((theme: Theme) =>
 );
 
 interface ToiletPanelProps {
-    toilet: Toilet
+    toilet: ToiletResult
 }
 
 export default function ToiletPanel(props: ToiletPanelProps) {
     const classes = useStyles();
     const toilet = props.toilet;
-
+    let distanceStr = toilet.distance.toFixed(0) + "m";
+    if(toilet.distance >= 1000) {
+        distanceStr = (toilet.distance / 1000).toFixed(1) + "km";
+    } else if(toilet.distance < 0) {
+        distanceStr = "-";
+    }
     return (
         <ExpansionPanel>
             <ExpansionPanelSummary expandIcon={<ExpandMoreIcon/>}>
                 <div className={classes.column}>
                     <Typography className={classes.heading}>
-                        {toilet.title}
+                        {toilet.toilet.title}
                     </Typography>
                 </div>
                 <div className={classes.column}>
                     <Box display="flex" width="100%" height="100%" justifyItems="center" alignItems="center">
-                        <RatingView size="XS" rating={toilet.rating} />
+                        <RatingView size="XS" rating={toilet.toilet.rating} />
                     </Box>
                 </div>
                 <div className={classes.column}>
                     <Typography className={classes.hintHeading}>
-                        Distance: 0m
+                        {distanceStr}
                     </Typography>
                 </div>
             </ExpansionPanelSummary>
             <ExpansionPanelDetails>
                 <div className={classes.content}>
                     {
-                        toilet.previewImage &&
-                        <img src={toilet.previewImage} alt={toilet.id} width="100%"/>
+                        toilet.toilet.previewImage &&
+                        <img src={toilet.toilet.previewImage} alt={toilet.toilet.id} width="100%"/>
                     }
                     <Typography variant="h3">
-                        {props.toilet.title}
+                        {props.toilet.toilet.title}
                     </Typography>
                     <Typography variant="h5">
-                        {props.toilet.description}
+                        {props.toilet.toilet.description}
                     </Typography>
                 </div>
             </ExpansionPanelDetails>
