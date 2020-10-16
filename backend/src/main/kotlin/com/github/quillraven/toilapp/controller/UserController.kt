@@ -1,6 +1,6 @@
 package com.github.quillraven.toilapp.controller
 
-import com.github.quillraven.toilapp.model.User
+import com.github.quillraven.toilapp.model.db.User
 import com.github.quillraven.toilapp.service.UserService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.web.bind.annotation.PostMapping

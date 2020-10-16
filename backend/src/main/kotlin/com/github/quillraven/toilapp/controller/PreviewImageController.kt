@@ -1,9 +1,6 @@
 package com.github.quillraven.toilapp.controller
 
-import com.github.quillraven.toilapp.model.Toilet
 import com.github.quillraven.toilapp.service.ImageService
-import com.github.quillraven.toilapp.service.ToiletService
-import org.bson.types.ObjectId
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.http.codec.multipart.FilePart
@@ -21,33 +18,23 @@ import reactor.core.publisher.Mono
 @RestController
 @RequestMapping("/api")
 class PreviewImageController(
-        @Autowired
-    private val imageService: ImageService,
-        @Autowired
-    private val toiletService: ToiletService,
+    @Autowired private val imageService: ImageService,
 ) {
-    // TODO Transactional is currently not supported by GridFS and therefore we could potentially create images that are not
-    // linked to any toilet -> let's fix that later ;)
+    /*
+      FIXME: Transactional is currently not supported by GridFS and therefore we could potentially
+       create images that are not linked to any toilet -> let's fix that later ;)
+    */
     @PostMapping("/previews")
     @Transactional
     fun createPreviewImage(
         @RequestPart("file") file: Mono<FilePart>,
         @RequestParam("toiletId") toiletId: String,
-    ): Mono<Toilet> {
-        return toiletService
-            .getById(ObjectId(toiletId))
-            .zipWith(imageService.create(file))
-            .flatMap {
-                val toilet = it.t1
-                val fileId = it.t2
-                toiletService.update(toilet.id, toilet.copy(previewID = fileId))
-            }
-    }
+    ) = imageService.createAndLinkImage(file, toiletId)
 
     @GetMapping(
         value = ["/previews/{id}"],
         produces = [MediaType.IMAGE_JPEG_VALUE, MediaType.IMAGE_PNG_VALUE]
     )
     @ResponseBody
-    fun getPreviewImage(@PathVariable id: String) = imageService.get(ObjectId(id))
+    fun getPreviewImage(@PathVariable id: String) = imageService.get(id)
 }

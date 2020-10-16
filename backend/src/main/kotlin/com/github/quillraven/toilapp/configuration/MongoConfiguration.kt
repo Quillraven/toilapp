@@ -1,4 +1,4 @@
-package com.github.quillraven.toilapp.repository
+package com.github.quillraven.toilapp.configuration
 
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -11,12 +11,12 @@ import org.springframework.data.mongodb.gridfs.ReactiveGridFsTemplate
 class MongoConfiguration {
     @Bean("reactiveGridFsTemplateForImages")
     fun reactiveGridFsTemplateForImages(
-            reactiveMongoDbFactory: ReactiveMongoDatabaseFactory,
-            mappingMongoConverter: MappingMongoConverter
+        reactiveMongoDbFactory: ReactiveMongoDatabaseFactory,
+        mappingMongoConverter: MappingMongoConverter
     ) = ReactiveGridFsTemplate(reactiveMongoDbFactory, mappingMongoConverter, "images")
 
     @Bean
     fun reactiveMongoTransactionManager(
-            reactiveMongoDbFactory: ReactiveMongoDatabaseFactory
+        reactiveMongoDbFactory: ReactiveMongoDatabaseFactory
     ) = ReactiveMongoTransactionManager(reactiveMongoDbFactory)
 }

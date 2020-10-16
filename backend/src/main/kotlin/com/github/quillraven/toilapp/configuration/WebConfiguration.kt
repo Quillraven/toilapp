@@ -1,13 +1,8 @@
-package com.github.quillraven.toilapp.web
+package com.github.quillraven.toilapp.configuration
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import org.springframework.data.mongodb.ReactiveMongoDatabaseFactory
-import org.springframework.data.mongodb.ReactiveMongoTransactionManager
-import org.springframework.data.mongodb.core.convert.MappingMongoConverter
 import org.springframework.data.mongodb.core.geo.GeoJsonModule
-import org.springframework.data.mongodb.gridfs.ReactiveGridFsTemplate
 import org.springframework.data.web.config.SpringDataJacksonModules
 import org.springframework.http.codec.ServerCodecConfigurer
 import org.springframework.http.codec.json.Jackson2JsonDecoder

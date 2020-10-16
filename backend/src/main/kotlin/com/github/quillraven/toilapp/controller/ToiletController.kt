@@ -1,9 +1,8 @@
 package com.github.quillraven.toilapp.controller
 
-import com.github.quillraven.toilapp.dto.ToiletResultDto
-import com.github.quillraven.toilapp.model.Toilet
+import com.github.quillraven.toilapp.model.db.Toilet
+import com.github.quillraven.toilapp.model.dto.ToiletDto
 import com.github.quillraven.toilapp.service.ToiletService
-import org.bson.types.ObjectId
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
@@ -28,24 +27,23 @@ fun <T : Any> KClass<out T>.getNonNullProperties(vararg exceptions: KProperty1<T
 @RestController
 @RequestMapping("/api")
 class ToiletController(
-    @Autowired
-    private val toiletService: ToiletService
+    @Autowired private val toiletService: ToiletService
 ) {
     @PostMapping("/toilets")
     fun createToilet(@RequestBody toilet: Toilet) = toiletService.create(toilet)
 
     @PutMapping("/toilets/{id}")
-    fun updateToilet(@PathVariable id: String, @RequestBody toilet: Toilet) = toiletService.update(ObjectId(id), toilet)
+    fun updateToilet(@PathVariable id: String, @RequestBody toilet: Toilet) = toiletService.update(id, toilet)
 
     @GetMapping("/toilets")
     fun getNearbyToilets(
         @RequestParam(required = false) lon: Double?,
         @RequestParam(required = false) lat: Double?,
         @RequestParam(required = false) maxDistanceInMeters: Double?
-    ): Flux<ToiletResultDto> {
+    ): Flux<ToiletDto> {
         return when {
             lon == null || lat == null || maxDistanceInMeters == null -> {
-                toiletService.getAll().map { ToiletResultDto(it, -1.0) }
+                toiletService.getAll()
             }
             else -> {
                 toiletService.getNearbyToilets(lon, lat, maxDistanceInMeters)
@@ -54,5 +52,5 @@ class ToiletController(
     }
 
     @DeleteMapping("/toilets/{id}")
-    fun deleteToilet(@PathVariable id: String) = toiletService.delete(ObjectId(id))
+    fun deleteToilet(@PathVariable id: String) = toiletService.delete(id)
 }

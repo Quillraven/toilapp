@@ -2,6 +2,7 @@ package com.github.quillraven.toilapp.service
 
 import com.github.quillraven.toilapp.PreviewImageDoesNotExistException
 import com.github.quillraven.toilapp.UnsupportedImageContentTypeException
+import com.github.quillraven.toilapp.model.dto.ToiletDto
 import org.bson.types.ObjectId
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
@@ -20,11 +21,10 @@ import java.util.concurrent.Callable
 
 @Service
 class GrisFsImageService(
-    @Autowired
     @Qualifier("reactiveGridFsTemplateForImages")
-    private val gridFsTemplate: ReactiveGridFsTemplate
+    @Autowired private val gridFsTemplate: ReactiveGridFsTemplate,
+    @Autowired private val toiletService: ToiletService,
 ) : ImageService {
-
     override fun create(filePartMono: Mono<FilePart>): Mono<String> {
         return filePartMono
             .flatMap { filePart ->
@@ -54,12 +54,12 @@ class GrisFsImageService(
             .map { it.toHexString() }
     }
 
-    override fun get(id: ObjectId): Mono<ByteArray> {
+    override fun get(id: String): Mono<ByteArray> {
         LOG.debug("get: id=$id")
         return gridFsTemplate
             // get file
             .findOne(Query.query(Criteria.where("_id").`is`(id)))
-            .switchIfEmpty(Mono.error(PreviewImageDoesNotExistException(id.toHexString())))
+            .switchIfEmpty(Mono.error(PreviewImageDoesNotExistException(id)))
             // get content type, file size and resource (=chunks)
             .flatMap { gridFsFile ->
                 gridFsTemplate.getResource(gridFsFile)
@@ -75,12 +75,25 @@ class GrisFsImageService(
     }
 
     override fun store(inStreamCallable: Callable<InputStream>, name: String): Mono<ObjectId> {
+        LOG.debug("store: (name=$name)")
         val flux = DataBufferUtils.readInputStream(
             inStreamCallable,
             DefaultDataBufferFactory(),
             DefaultDataBufferFactory.DEFAULT_INITIAL_CAPACITY
         )
         return gridFsTemplate.store(flux, "myName")
+    }
+
+    override fun createAndLinkImage(file: Mono<FilePart>, toiletId: String): Mono<ToiletDto> {
+        LOG.debug("createAndLinkImage: (toiletId=$toiletId)")
+        return toiletService
+            .getById(toiletId)
+            .zipWith(create(file))
+            .flatMap {
+                val toilet = it.t1
+                val fileId = it.t2
+                toiletService.update(toiletId, toilet.copy(previewID = ObjectId(fileId)))
+            }
     }
 
     companion object {

@@ -1,10 +1,11 @@
 package com.github.quillraven.toilapp.service
 
 import com.github.quillraven.toilapp.ToiletDoesNotExistException
-import com.github.quillraven.toilapp.model.Toilet
+import com.github.quillraven.toilapp.model.db.Toilet
 import com.github.quillraven.toilapp.repository.ToiletRepository
 import io.mockk.every
 import io.mockk.mockk
+import org.bson.types.ObjectId
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 import reactor.core.publisher.Flux
@@ -13,54 +14,56 @@ import reactor.test.StepVerifier
 
 object ToiletServiceSpec : Spek({
     val toiletRepository: ToiletRepository by memoized { mockk() }
-    val toiletService: IToiletService by memoized { ToiletService(toiletRepository) }
+    val toiletService: DefaultToiletService by memoized { DefaultToiletService(toiletRepository) }
 
     describe("A Toilet service") {
-        it("should create a new toilet with id 1") {
-            val expectedToilet = Toilet(id = "1")
+        it("should create a new toilet") {
+            val expectedToilet = Toilet()
             every { toiletRepository.save(any()) } returns Mono.just(expectedToilet)
 
             StepVerifier
                 .create(toiletService.create(expectedToilet))
-                .expectNext(expectedToilet)
+                .expectNext(toiletService.createToiletDto(expectedToilet))
                 .expectComplete()
                 .verify()
         }
 
         it("should update toilet description from A to B") {
-            val existingToilet = Toilet(id = "1", description = "A")
-            val expectedToilet = Toilet(id = "1", description = "B")
-            every { toiletRepository.findById("1") } returns Mono.just(existingToilet)
+            val id = ObjectId()
+            val existingToilet = Toilet(id = id, description = "A")
+            val expectedToilet = Toilet(id = id, description = "B")
+            every { toiletRepository.findById(id) } returns Mono.just(existingToilet)
             every { toiletRepository.save(any()) } returns Mono.just(expectedToilet)
 
             StepVerifier
-                .create(toiletService.update("1", expectedToilet))
-                .expectNext(expectedToilet)
+                .create(toiletService.update(id.toHexString(), expectedToilet))
+                .expectNext(toiletService.createToiletDto(expectedToilet))
                 .expectComplete()
                 .verify()
         }
 
         it("should throw ToiletDoesNotExistException") {
-            every { toiletRepository.findById("1") } returns Mono.empty()
+            val id = ObjectId()
+            every { toiletRepository.findById(id) } returns Mono.empty()
 
             StepVerifier
-                .create(toiletService.update("1", Toilet()))
+                .create(toiletService.update(id.toHexString(), Toilet()))
                 .expectErrorMatches {
                     it is ToiletDoesNotExistException
-                            && it.message == "404 Toilet of id |1| does not exist!"
+                            && it.message == "404 Toilet of id '1' does not exist!"
                 }
                 .verify()
         }
 
         it("should return two toilets") {
-            val toilet1 = Toilet(id = "1")
-            val toilet2 = Toilet(id = "2")
+            val toilet1 = Toilet()
+            val toilet2 = Toilet()
             every { toiletRepository.findAll() } returns Flux.just(toilet1, toilet2)
 
             StepVerifier
                 .create(toiletService.getAll())
-                .expectNext(toilet1)
-                .expectNext(toilet2)
+                .expectNext(toiletService.createToiletDto(toilet1))
+                .expectNext(toiletService.createToiletDto(toilet2))
                 .expectComplete()
                 .verify()
         }
@@ -75,24 +78,25 @@ object ToiletServiceSpec : Spek({
         }
 
         it("should return Mono<Void>") {
-            every { toiletRepository.findById(any<String>()) } returns Mono.just(Toilet(id = "1"))
-            every { toiletRepository.deleteById(any<String>()) } returns Mono.empty()
+            val id = ObjectId()
+            every { toiletRepository.findById(id) } returns Mono.just(Toilet())
+            every { toiletRepository.deleteById(id) } returns Mono.empty()
 
             StepVerifier
-                .create(toiletService.delete("1"))
+                .create(toiletService.delete(id.toHexString()))
                 .expectComplete()
                 .verify()
         }
 
         it("should throw ToiletDoesNotExistException") {
-            every { toiletRepository.findById(any<String>()) } returns Mono.empty()
-            every { toiletRepository.deleteById(any<String>()) } returns Mono.empty()
+            val id = ObjectId()
+            every { toiletRepository.findById(id) } returns Mono.empty()
 
             StepVerifier
-                .create(toiletService.delete("1"))
+                .create(toiletService.delete(id.toHexString()))
                 .expectErrorMatches {
                     it is ToiletDoesNotExistException
-                            && it.message == "404 Toilet of id |1| does not exist!"
+                            && it.message == "404 Toilet of id '${id.toHexString()}' does not exist!"
                 }
                 .verify()
         }

@@ -1,4 +1,4 @@
-package com.github.quillraven.toilapp.model
+package com.github.quillraven.toilapp.model.db
 
 import org.bson.types.ObjectId
 import org.springframework.data.annotation.Id
@@ -10,17 +10,17 @@ import org.springframework.data.mongodb.core.mapping.Document
 @Document(collection = "toilets")
 data class Toilet(
     @Id
-    val id: ObjectId = ObjectId.get(),
+    val id: ObjectId = ObjectId(),
     val title: String = "",
     @GeoSpatialIndexed(name = "location", type = GeoSpatialIndexType.GEO_2DSPHERE)
     val location: GeoJsonPoint = GeoJsonPoint(0.0, 0.0),
-    val previewID: String = "",
-    val rating: Double = 0.0, //mean rating -> Double
+    val previewID: ObjectId? = null,
+    val rating: Double = 0.0,
     val disabled: Boolean = false,
     val toiletCrewApproved: Boolean = false,
     val description: String = "",
-    val comments: Array<Comment>? = arrayOf(),
-    val images: Array<String>? = arrayOf()
+    val commentRefs: MutableList<ObjectId> = mutableListOf(),
+    val imageRefs: MutableList<ObjectId> = mutableListOf(),
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -28,15 +28,12 @@ data class Toilet(
 
         other as Toilet
 
-        if (title != other.title) return false
-        if (location != other.location) return false
+        if (id != other.id) return false
 
         return true
     }
 
     override fun hashCode(): Int {
-        var result = title.hashCode()
-        result = 31 * result + location.hashCode()
-        return result
+        return id.hashCode()
     }
 }
