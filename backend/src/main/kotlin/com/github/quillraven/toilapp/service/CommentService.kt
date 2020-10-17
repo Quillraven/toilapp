@@ -76,10 +76,10 @@ class DefaultCommentService(
             // check if user is valid
             .getById(userId)
             // if yes -> create new comment
+            .flatMap { Mono.fromCallable { URLDecoder.decode(text, "UTF-8") } }
             .flatMap {
-                LOG.debug("Found user to enter comment")
-                // TODO how to replace blocking decode call?
-                create(it.id.toHexString(), URLDecoder.decode(text, "UTF-8"))
+                LOG.debug("Found user '$userId' for comment '$it'")
+                create(userId, it)
             }
             // if it was created successfully -> link it to toilet
             .zipWith(toiletService.getById(toiletId))
@@ -87,7 +87,7 @@ class DefaultCommentService(
                 val comment = tuple.t1
                 val toilet = tuple.t2
 
-                LOG.debug("Found toilet to enter comment")
+                LOG.debug("Found toilet '${toilet.id} for comment '$comment")
 
                 toiletService.addComment(comment.id, toilet)
             }
@@ -100,14 +100,13 @@ class DefaultCommentService(
         return toiletService
             // get toilet
             .getById(toiletId)
-            // retrieve comments by IDs
+            // retrieve comments by IDsh
             .map { it.commentRefs }
             .flatMapMany { Flux.fromIterable(it) }
             .flatMap { getById(it.toHexString()) }
-            .flatMap { comment ->
-                userService.getById(comment.userRef.toHexString())
-                    .map { createCommentDto(comment, it) }
-            }
+            // and add user name information to each comment
+            .flatMap { Mono.just(it).zipWith(userService.getById(it.userRef.toHexString())) }
+            .map { createCommentDto(it.t1, it.t2) }
     }
 
     companion object {
