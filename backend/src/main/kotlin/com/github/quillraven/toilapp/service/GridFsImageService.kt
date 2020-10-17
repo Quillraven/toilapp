@@ -22,9 +22,11 @@ import java.util.concurrent.Callable
 @Service
 class GrisFsImageService(
     @Qualifier("reactiveGridFsTemplateForImages")
-    @Autowired private val gridFsTemplate: ReactiveGridFsTemplate,
-    @Autowired private val toiletService: ToiletService,
+    @Autowired private val gridFsTemplate: ReactiveGridFsTemplate
 ) : ImageService {
+    lateinit var toiletService: ToiletService
+        @Autowired set
+
     override fun create(filePartMono: Mono<FilePart>): Mono<String> {
         return filePartMono
             .flatMap { filePart ->
@@ -72,6 +74,11 @@ class GrisFsImageService(
             .map { inputStream ->
                 inputStream.use { it.readBytes() }
             }
+    }
+
+    override fun delete(id: String): Mono<Void> {
+        LOG.debug("delete: id=$id")
+        return gridFsTemplate.delete(Query.query(Criteria.where("_id").`is`(id)))
     }
 
     override fun store(inStreamCallable: Callable<InputStream>, name: String): Mono<ObjectId> {

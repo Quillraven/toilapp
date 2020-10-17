@@ -14,6 +14,8 @@ import reactor.core.publisher.Flux
 interface ToiletRepository : ReactiveMongoRepository<Toilet, ObjectId> {
     @Suppress("SpringDataRepositoryMethodReturnTypeInspection", "SpringDataRepositoryMethodParametersInspection")
     fun findByLocationNear(location: Point, distance: Distance): Flux<GeoResult<Toilet>>
+
+    fun findByCommentRefsContains(commentId: ObjectId): Flux<Toilet>
 }
 
 

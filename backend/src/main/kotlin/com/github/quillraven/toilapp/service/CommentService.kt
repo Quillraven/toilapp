@@ -19,6 +19,7 @@ interface CommentService {
     fun create(userId: String, text: String): Mono<CommentDto>
     fun update(id: String, text: String): Mono<CommentDto>
     fun getById(id: String): Mono<Comment>
+    fun deleteAndRemove(id: String): Mono<Void>
     fun delete(id: String): Mono<Void>
     fun createAndLink(userId: String, text: String, toiletId: String): Mono<CommentDto>
     fun getComments(toiletId: String): Flux<CommentDto>
@@ -26,10 +27,14 @@ interface CommentService {
 
 @Service
 class DefaultCommentService(
-    @Autowired private val commentRepository: CommentRepository,
-    @Autowired private val userService: UserService,
-    @Autowired private val toiletService: ToiletService,
+    @Autowired private val commentRepository: CommentRepository
 ) : CommentService {
+    lateinit var userService: UserService
+        @Autowired set
+
+    lateinit var toiletService: ToiletService
+        @Autowired set
+
     /**
      * Returns a [CommentDto] instance out of the given [comment].
      * The [UserDto] of the comment only contains the id. Name and email
@@ -63,11 +68,20 @@ class DefaultCommentService(
             .switchIfEmpty(Mono.error(CommentDoesNotExistException(id)))
     }
 
+    override fun deleteAndRemove(id: String): Mono<Void> {
+        LOG.debug("deleteAndRemove: (id=$id)")
+        return toiletService
+            .getByCommentId(id)
+            // remove comment from any toilet where it is referenced
+            .flatMap { toiletService.removeComment(id, it) }
+            // finally delete it
+            .then(delete(id))
+    }
+
     override fun delete(id: String): Mono<Void> {
         LOG.debug("delete: (id=$id)")
-        return getById(id)
+        return commentRepository.findById(ObjectId(id))
             .flatMap { commentRepository.deleteById(ObjectId(id)) }
-        // TODO also remove from toilets
     }
 
     override fun createAndLink(userId: String, text: String, toiletId: String): Mono<CommentDto> {
