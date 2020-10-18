@@ -38,6 +38,7 @@ class DefaultToiletService(
 
     /**
      * Returns a [ToiletDto] instance out of the given [toilet] and [distance].
+     * The [Toilet.previewID] is converted to a download URL of the image.
      * Comments and images need to be fetched separately, if needed.
      */
     fun createToiletDto(toilet: Toilet, distance: Double = 0.0) = ToiletDto(
@@ -45,7 +46,7 @@ class DefaultToiletService(
         toilet.title,
         toilet.location,
         distance,
-        if (toilet.previewID != null) toilet.previewID.toHexString() else "",
+        getPreviewURL(toilet),
         toilet.rating,
         toilet.disabled,
         toilet.toiletCrewApproved,
@@ -53,6 +54,13 @@ class DefaultToiletService(
         mutableListOf(),
         mutableListOf()
     )
+
+    private fun getPreviewURL(toilet: Toilet): String {
+        return when {
+            toilet.previewID != null -> "/previews/${toilet.previewID.toHexString()}"
+            else -> ""
+        }
+    }
 
     override fun create(toilet: Toilet): Mono<ToiletDto> {
         LOG.debug("create: $toilet")

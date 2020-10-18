@@ -6,7 +6,7 @@ export interface Toilet {
     title: string,
     location: GeoLocation,
     distance: number,
-    previewID: string,
+    previewURL: string,
     rating: number,
     disabled: boolean,
     toiletCrewApproved: boolean,

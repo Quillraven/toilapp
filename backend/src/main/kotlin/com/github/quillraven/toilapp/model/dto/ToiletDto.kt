@@ -7,7 +7,7 @@ data class ToiletDto(
     val title: String,
     val location: GeoJsonPoint,
     val distance: Double,
-    val previewID: String,
+    val previewURL: String,
     val rating: Double,
     val disabled: Boolean,
     val toiletCrewApproved: Boolean,

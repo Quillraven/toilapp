@@ -4,7 +4,7 @@ import {Toilet} from "../model/Toilet";
 import {GeoLocation} from "../model/GeoLocation";
 
 export interface ToiletService {
-    getToilets(geoLocation: GeoLocation, loadImages?: boolean): Promise<Toilet[]>;
+    getToilets(geoLocation: GeoLocation): Promise<Toilet[]>
 }
 
 export class RestToiletService implements ToiletService {
@@ -14,6 +14,11 @@ export class RestToiletService implements ToiletService {
         return axios
             .get(API_ENDPOINT + '/toilets?lon=' + geoLocation.lon + "&lat=" + geoLocation.lat + "&maxDistanceInMeters=" + this.maxDistance)
             .then(response => {
+                const toilets: Toilet[] = response.data
+
+                toilets.filter(it => it.previewURL)
+                    .forEach(it => it.previewURL = API_ENDPOINT + it.previewURL)
+
                 return response.data
             }, error => {
                 console.error(`Could not load toilets. Error=${error}`)
@@ -29,7 +34,7 @@ export class MockToiletService implements ToiletService {
                     id: "1",
                     title: "Beautiful toilet",
                     location: {lon: 47.0, lat: 16.0},
-                    previewID: "/toilet.jpg",
+                    previewURL: "/toilet.jpg",
                     rating: 4.6,
                     disabled: false,
                     toiletCrewApproved: true,
@@ -42,7 +47,7 @@ export class MockToiletService implements ToiletService {
                     id: "2",
                     title: "Dirty toilet",
                     location: {lon: 47.0, lat: 16.0},
-                    previewID: "/toilet2.jpg",
+                    previewURL: "/toilet2.jpg",
                     rating: 1.3,
                     disabled: false,
                     toiletCrewApproved: true,
@@ -55,7 +60,7 @@ export class MockToiletService implements ToiletService {
                     id: "3",
                     title: "Porta Potty",
                     location: {lon: 47.0, lat: 16.0},
-                    previewID: "/toilet.jpg",
+                    previewURL: "/toilet.jpg",
                     rating: 2.5,
                     disabled: false,
                     toiletCrewApproved: true,
@@ -68,7 +73,7 @@ export class MockToiletService implements ToiletService {
                     id: "4",
                     title: "Shit Heaven",
                     location: {lon: 47.0, lat: 16.0},
-                    previewID: "/toilet2.jpg",
+                    previewURL: "/toilet2.jpg",
                     rating: 2.5,
                     disabled: false,
                     toiletCrewApproved: true,
