@@ -1,7 +1,4 @@
-export interface GeoLocation {
-    lon: number,
-    lat: number
-}
+import {GeoLocation} from "../model/GeoLocation";
 
 export interface GeoLocationService {
     getGeoLocation(): GeoLocation

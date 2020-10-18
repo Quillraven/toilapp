@@ -1,8 +1,9 @@
 import React, {useEffect, useState} from 'react';
-import {RestToiletService, ToiletResult, ToiletService} from '../services/ToiletService';
+import {RestToiletService, ToiletService} from '../services/ToiletService';
 import {createStyles, makeStyles, Theme} from '@material-ui/core/styles';
 import ToiletPanel from "./ToiletPanel";
-import { DefaultGeoLocationService, GeoLocationService } from '../services/GeoLocationService';
+import {DefaultGeoLocationService, GeoLocationService} from '../services/GeoLocationService';
+import {Toilet} from "../model/Toilet";
 
 const useStyles = makeStyles((theme: Theme) =>
     createStyles({
@@ -14,7 +15,7 @@ const useStyles = makeStyles((theme: Theme) =>
 
 export default function ToiletOverview() {
     const classes = useStyles();
-    const [toilets, setToilets] = useState<ToiletResult[]>([]);
+    const [toilets, setToilets] = useState<Toilet[]>([]);
     const toiletService: ToiletService = new RestToiletService();
     const locationService: GeoLocationService = new DefaultGeoLocationService();
 
@@ -32,7 +33,7 @@ export default function ToiletOverview() {
         <div className={classes.root}>
             {
                 toilets.map(toilet => (
-                    <ToiletPanel toilet={toilet} key={toilet.toilet.id}/>
+                    <ToiletPanel toilet={toilet} key={toilet.id}/>
                 ))
             }
         </div>
