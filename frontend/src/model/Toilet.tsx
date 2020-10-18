@@ -1,4 +1,4 @@
-import {Comment} from "./Comment";
+import {ToiletComment} from "./ToiletComment";
 import {GeoLocation} from "./GeoLocation";
 
 export interface Toilet {
@@ -11,6 +11,6 @@ export interface Toilet {
     disabled: boolean,
     toiletCrewApproved: boolean,
     description: string,
-    comments: Array<Comment>,
+    comments: Array<ToiletComment>,
     images: Array<string>,
 }

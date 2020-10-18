@@ -11,6 +11,7 @@ import React from "react";
 import ExpandMoreIcon from "@material-ui/icons/ExpandMore"
 import {RatingView} from "./Rating";
 import {Toilet} from "../model/Toilet";
+import Comments from "./Comments";
 
 const useStyles = makeStyles((theme: Theme) =>
     createStyles({
@@ -41,12 +42,14 @@ interface ToiletPanelProps {
 export default function ToiletPanel(props: ToiletPanelProps) {
     const classes = useStyles();
     const toilet = props.toilet;
+
     let distanceStr = toilet.distance.toFixed(0) + "m";
     if (toilet.distance >= 1000) {
         distanceStr = (toilet.distance / 1000).toFixed(1) + "km";
     } else if (toilet.distance < 0) {
         distanceStr = "-";
     }
+
     return (
         <ExpansionPanel>
             <ExpansionPanelSummary expandIcon={<ExpandMoreIcon/>}>
@@ -77,6 +80,10 @@ export default function ToiletPanel(props: ToiletPanelProps) {
                     </Typography>
                     <Typography variant="h5">
                         {props.toilet.description}
+                    </Typography>
+
+                    <Typography variant="button">
+                        <Comments toilet={toilet}/>
                     </Typography>
                 </div>
             </ExpansionPanelDetails>

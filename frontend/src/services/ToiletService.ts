@@ -2,9 +2,12 @@ import {API_ENDPOINT} from "./ServiceConstants";
 import axios from "axios";
 import {Toilet} from "../model/Toilet";
 import {GeoLocation} from "../model/GeoLocation";
+import {ToiletComment} from "../model/ToiletComment";
 
 export interface ToiletService {
     getToilets(geoLocation: GeoLocation): Promise<Toilet[]>
+
+    getComments(toilet: Toilet): Promise<ToiletComment[]>
 }
 
 export class RestToiletService implements ToiletService {
@@ -24,11 +27,27 @@ export class RestToiletService implements ToiletService {
                 console.error(`Could not load toilets. Error=${error}`)
             })
     }
+
+    public getComments(toilet: Toilet): Promise<ToiletComment[]> {
+        return axios
+            .get(API_ENDPOINT + `/comments/${toilet.id}`)
+            .then(response => {
+                const comments: ToiletComment[] = response.data
+
+                // TODO is there a way to retrieve already a correct date instance from REST directly?
+                //  we currently receive a string
+                comments.forEach(it => it.date = new Date(it.date))
+
+                return response.data
+            }, error => {
+                console.error(`Could not get comments for toilet '${toilet.id}'. Error=${error}`)
+            })
+    }
 }
 
 export class MockToiletService implements ToiletService {
     getToilets(): Promise<Toilet[]> {
-        return new Promise<Toilet[]>(function (resolve, reject) {
+        return new Promise<Toilet[]>(function (resolve) {
             const toilets: Toilet[] = [
                 {
                     id: "1",
@@ -85,5 +104,12 @@ export class MockToiletService implements ToiletService {
             ];
             resolve(toilets);
         });
+    }
+
+    getComments(toilet: Toilet): Promise<ToiletComment[]> {
+        return new Promise<ToiletComment[]>(function (resolve) {
+            const comments: ToiletComment[] = []
+            resolve(comments)
+        })
     }
 }
