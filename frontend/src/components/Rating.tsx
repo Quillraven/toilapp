@@ -1,7 +1,7 @@
 import React from 'react';
 import Box from '@material-ui/core/Box';
 
-export function RatingView(props: { rating: number, size?: string }) {
+export function RatingView(props: { toiletId: string, rating: number, size?: string }) {
     let size = props.size ? props.size : 'M';
     size = ['XS', 'S', 'M', 'L'].includes(size) ? size : 'M';
     let sizeNum = getSizeNum(size);
@@ -9,14 +9,16 @@ export function RatingView(props: { rating: number, size?: string }) {
     return (
         <Box display="flex" flex={1} flexDirection="row" justifyContent="center">
             {[0, 1, 2, 3, 4].map((idx) => (
-                <div style={{width: sizeNum, height: sizeNum}}><RatingElement rating={props.rating} index={idx}/></div>
+                <div style={{width: sizeNum, height: sizeNum}} key={`RatingViewDiv-${props.toiletId}-${idx}`}>
+                    <RatingElement rating={props.rating} index={idx}/>
+                </div>
             ))}
         </Box>
     );
 
 }
 
-export function RatingSelect(props: { rating?: number, size?: string, onRatingChange: (rating: number) => void }) {
+export function RatingSelect(props: { toiletId: string, rating?: number, size?: string, onRatingChange: (rating: number) => void }) {
     let size = props.size ? props.size : 'M';
     size = ['XS', 'S', 'M', 'L'].includes(size) ? size : 'M';
     let sizeNum = getSizeNum(size);
@@ -41,8 +43,9 @@ export function RatingSelect(props: { rating?: number, size?: string, onRatingCh
                      onClick={() => ratingLocked(idx)}
                      onMouseEnter={() => mouseEnter(idx)}
                      onMouseLeave={mouseExit}
+                     key={`RatingSelectDiv-${props.toiletId}-${idx}`}
                 >
-                    <RatingElement rating={displayRating} index={idx}/>
+                    <RatingElement rating={displayRating} index={idx} key={`RatingElement-${idx}`}/>
                 </div>
             ))}
         </Box>

@@ -58,8 +58,8 @@ export default function Comments(props: CommentsProps) {
             <ExpansionPanelDetails>
                 <List className={classes.root}>
                     {
-                        comments.map(comment => (
-                            <ListItem alignItems="flex-start">
+                        comments.map((comment, idx) => (
+                            <ListItem alignItems="flex-start" key={`Comment-${idx}`}>
                                 <ListItemText
                                     primary={comment.user.name}
                                     secondary={
@@ -68,10 +68,15 @@ export default function Comments(props: CommentsProps) {
                                                 component="span"
                                                 variant="body1"
                                                 className={classes.inline}
-                                                color="textPrimary">
+                                                color="textPrimary"
+                                            >
                                                 {comment.date.toLocaleString()}
                                             </Typography>
-                                            <Typography variant="body2">
+                                            <br/>
+                                            <Typography
+                                                component="span"
+                                                variant="body2"
+                                            >
                                                 {comment.text}
                                             </Typography>
                                         </React.Fragment>
