@@ -3,7 +3,9 @@ import AppBar from "@material-ui/core/AppBar";
 import {IconButton, Menu, MenuItem, Toolbar, Typography} from "@material-ui/core";
 import React from "react";
 import {AccountCircle} from "@material-ui/icons";
-import MenuIcon from "@material-ui/icons/Menu"
+import MenuIcon from "@material-ui/icons/Menu";
+import ArrowBack from "@material-ui/icons/ArrowBack";
+import { useHistory } from "react-router-dom";
 
 const useStyles = makeStyles((theme: Theme) =>
     createStyles({
@@ -31,6 +33,7 @@ const useStyles = makeStyles((theme: Theme) =>
 export default function NavigationBar() {
     const classes = useStyles();
     const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+    const [location, setLocation] = React.useState("/");
     const isMenuOpen = Boolean(anchorEl);
 
     const handleProfileMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
@@ -56,11 +59,25 @@ export default function NavigationBar() {
             <MenuItem onClick={handleMenuClose}>My account</MenuItem>
         </Menu>
     );
-
+    const hist = useHistory();
+    hist.listen((location: any, action: any) => {
+        setLocation(hist.location.pathname);
+    });
+    console.log("hist location", hist.location);
     return (
         <div className={classes.grow}>
             <AppBar position="static">
                 <Toolbar>
+                    <div style={{display: location === "/" ? "none" : "block"}}>
+                        <IconButton
+                            edge="start"
+                            className={classes.menuButton}
+                            color="inherit"
+                            onClick={() => hist.goBack()}
+                            aria-label="back">
+                            <ArrowBack/>
+                        </IconButton>
+                    </div>
                     <IconButton
                         edge="start"
                         className={classes.menuButton}

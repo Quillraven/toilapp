@@ -1,33 +1,16 @@
-import {createStyles, makeStyles, Theme} from "@material-ui/core/styles";
-import {Button, Card, CardActions, CardContent, CardMedia, Typography} from "@material-ui/core";
+import {Grid, Typography} from "@material-ui/core";
 import React from "react";
 import {RatingView} from "./Rating";
 import {Toilet} from "../model/Toilet";
-import Box from "@material-ui/core/Box";
-import {useHistory} from "react-router-dom"
 import Comments from "./Comments";
-
-const useStyles = makeStyles((theme: Theme) =>
-    createStyles({
-        root: {
-            minWidth: 345,
-        },
-        media: {
-            height: 0,
-            paddingTop: '56.25%', // 16:9
-        },
-    })
-);
 
 interface ToiletDetailsItemProps {
     toilet: Toilet
 }
 
 export default function ToiletDetailsItem(props: ToiletDetailsItemProps) {
-    const classes = useStyles();
     const toilet = props.toilet;
-    const history = useHistory()
-
+ 
     let distanceStr = toilet.distance.toFixed(0) + "m";
     if (toilet.distance >= 1000) {
         distanceStr = (toilet.distance / 1000).toFixed(1) + "km";
@@ -35,42 +18,32 @@ export default function ToiletDetailsItem(props: ToiletDetailsItemProps) {
         distanceStr = "-";
     }
 
-    const handleBackBtnClick = () => {
-        history.goBack()
-    };
-
     return (
-        <Card className={classes.root}>
-            {
-                toilet.previewURL &&
-                <CardMedia
-                    className={classes.media}
-                    image={toilet.previewURL}
-                    title={toilet.title}
-                />
-            }
-            <CardContent>
-                <Typography gutterBottom variant="h5" component="h2">
-                    <Box display="flex" flex="1" flexDirection="row" justifyContent="center">
+        <React.Fragment>
+            <Grid container justify="flex-start">
+                <Grid item 
+                    xs={12} sm={12} md={12} lg={6} xl={6}
+                    style={{maxWidth: "100%"}}>
+                    <img src={toilet.previewURL} alt={toilet.title} style={{width: "100%"}} />
+                </Grid>
+                <Grid item 
+                    xs={12} sm={12} md={12} lg={6} xl={6}
+                    style={{padding: "20px"}}>
+                    <Typography gutterBottom variant="h3" component="h2" align="center">
                         {toilet.title}
-                        <RatingView toiletId={toilet.id} size="XS" rating={toilet.rating}/>
-                    </Box>
-                </Typography>
-                <Typography variant="inherit">
-                    Distance: {distanceStr}
-                </Typography>
-                <Typography>
-                    {toilet.description}
-                </Typography>
+                    </Typography>
+                    <RatingView toiletId={toilet.id} size="S" rating={toilet.rating}/>
+                    <Typography variant="inherit">
+                        Distance: {distanceStr}
+                    </Typography>
+                    <Typography>
+                        {toilet.description}
+                    </Typography>
+                </Grid>
+            </Grid>
+            <div>
                 <Comments toilet={toilet}/>
-            </CardContent>
-            <CardActions>
-                <Button size="small"
-                        onClick={handleBackBtnClick}
-                >
-                    Back
-                </Button>
-            </CardActions>
-        </Card>
+            </div>
+        </React.Fragment>
     )
 }
