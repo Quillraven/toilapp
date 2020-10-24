@@ -9,5 +9,5 @@ data class User(
     @Id
     val id: ObjectId = ObjectId(),
     val name: String = "",
-    val email: String = "",
+    val email: String = ""
 )

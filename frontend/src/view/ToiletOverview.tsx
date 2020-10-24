@@ -1,14 +1,15 @@
 import React, {useEffect, useState} from 'react';
 import {RestToiletService, ToiletService} from '../services/ToiletService';
 import {createStyles, makeStyles, Theme} from '@material-ui/core/styles';
-import ToiletPanel from "./ToiletPanel";
+import ToiletOverviewItem from "../components/ToiletOverviewItem";
 import {DefaultGeoLocationService, GeoLocationService} from '../services/GeoLocationService';
 import {Toilet} from "../model/Toilet";
+import {Grid} from "@material-ui/core";
 
 const useStyles = makeStyles((theme: Theme) =>
     createStyles({
         root: {
-            width: '25%',
+            flexGrow: 1,
         },
     }),
 );
@@ -31,11 +32,19 @@ export default function ToiletOverview() {
 
     return (
         <div className={classes.root}>
-            {
-                toilets.map(toilet => (
-                    <ToiletPanel toilet={toilet} key={toilet.id}/>
-                ))
-            }
+            <Grid
+                container
+                direction="column"
+                justify="center"
+                alignItems="center">
+                {
+                    toilets.map(toilet => (
+                        <Grid item xs key={`GridItem-${toilet.id}`}>
+                            <ToiletOverviewItem toilet={toilet} key={`OverviewItem-${toilet.id}`}/>
+                        </Grid>
+                    ))
+                }
+            </Grid>
         </div>
     );
 }

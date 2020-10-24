@@ -1,15 +1,24 @@
 import React from 'react';
-import './App.css';
-import ToiletOverview from "./components/ToiletOverview";
+import ToiletOverview from "./view/ToiletOverview";
+import CssBaseline from "@material-ui/core/CssBaseline";
+import theme from "./theme";
+import {Route, Switch} from "react-router-dom";
+import ToiletDetails from "./view/ToiletDetails";
+import {ThemeProvider} from '@material-ui/core';
+import NavigationBar from "./components/NavigationBar";
 
-function App() {
+export default function App() {
+
     return (
-        <div className="App">
-            <header className="App-header">
-                <ToiletOverview/>
-            </header>
-        </div>
+        <ThemeProvider theme={theme}>
+            <CssBaseline/>
+
+            <NavigationBar/>
+
+            <Switch>
+                <Route exact path="/" component={ToiletOverview}/>
+                <Route exact path="/:toiletId" component={ToiletDetails}/>
+            </Switch>
+        </ThemeProvider>
     );
 }
-
-export default App;
