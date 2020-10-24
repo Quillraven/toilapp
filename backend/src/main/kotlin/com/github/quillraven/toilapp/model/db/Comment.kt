@@ -11,5 +11,5 @@ data class Comment(
     val id: ObjectId = ObjectId(),
     val userRef: ObjectId = ObjectId(),
     val date: Date = Date(),
-    val text: String = "",
+    val text: String = ""
 )

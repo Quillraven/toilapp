@@ -13,7 +13,7 @@ data class ToiletDto(
     val toiletCrewApproved: Boolean,
     val description: String,
     val comments: MutableList<CommentDto>,
-    val images: MutableList<String>,
+    val images: MutableList<String>
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

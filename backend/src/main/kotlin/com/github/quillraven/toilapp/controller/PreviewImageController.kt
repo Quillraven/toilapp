@@ -18,7 +18,7 @@ import reactor.core.publisher.Mono
 @RestController
 @RequestMapping("/api")
 class PreviewImageController(
-    @Autowired private val imageService: ImageService,
+    @Autowired private val imageService: ImageService
 ) {
     /*
       FIXME: Transactional is currently not supported by GridFS and therefore we could potentially
@@ -28,7 +28,7 @@ class PreviewImageController(
     @Transactional
     fun createPreviewImage(
         @RequestPart("file") file: Mono<FilePart>,
-        @RequestParam("toiletId") toiletId: String,
+        @RequestParam("toiletId") toiletId: String
     ) = imageService.createAndLinkImage(file, toiletId)
 
     @GetMapping(

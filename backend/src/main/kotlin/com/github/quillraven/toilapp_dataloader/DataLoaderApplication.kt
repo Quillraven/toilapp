@@ -84,7 +84,7 @@ class DataLoaderRunner(
     @Autowired private val toiletService: ToiletService,
     @Autowired private val userService: UserService,
     @Autowired private val commentService: CommentService,
-    @Autowired private val context: ConfigurableApplicationContext,
+    @Autowired private val context: ConfigurableApplicationContext
 ) : CommandLineRunner {
 
     val numToilets = 20
@@ -157,9 +157,9 @@ class DataLoaderRunner(
                 rating,
                 disabled = false,
                 toiletCrewApproved = false,
-                description,
-                comments.subList(Random.nextInt(4), comments.size).map { ObjectId(it.id) }.toMutableList(),
-                mutableListOf()
+                description = description,
+                commentRefs = comments.subList(Random.nextInt(4), comments.size).map { ObjectId(it.id) }.toMutableList(),
+                imageRefs = mutableListOf()
             )
             toiletService.create(toilet)
         }

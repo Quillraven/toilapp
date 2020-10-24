@@ -8,5 +8,5 @@ data class CommentDto(
     val user: UserDto,
     @JsonFormat(pattern = "yyyy-MM-dd hh:mm")
     val date: Date,
-    val text: String,
+    val text: String
 )

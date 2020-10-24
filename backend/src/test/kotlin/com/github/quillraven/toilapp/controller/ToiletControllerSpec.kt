@@ -25,7 +25,7 @@ import reactor.test.StepVerifier
 
 @WebFluxTest(controllers = [ToiletController::class])
 object ToiletControllerSpec : Spek({
-    val toiletRepository: ToiletRepository by memoized { mockk() }
+    val toiletRepository: ToiletRepository by memoized { mockk<ToiletRepository>() }
     val toiletService: DefaultToiletService by memoized { DefaultToiletService(toiletRepository) }
     val client by memoized {
         WebTestClient
