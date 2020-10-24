@@ -10,6 +10,7 @@ const useStyles = makeStyles((theme: Theme) =>
     createStyles({
         root: {
             flexGrow: 1,
+            padding: "20px"
         },
     }),
 );
@@ -34,12 +35,13 @@ export default function ToiletOverview() {
         <div className={classes.root}>
             <Grid
                 container
-                direction="column"
+                direction="row"
                 justify="center"
-                alignItems="center">
+                alignItems="center"
+                spacing={3}>
                 {
                     toilets.map(toilet => (
-                        <Grid item xs key={`GridItem-${toilet.id}`}>
+                        <Grid item key={`GridItem-${toilet.id}`} style={{width: "400px"}}>
                             <ToiletOverviewItem toilet={toilet} key={`OverviewItem-${toilet.id}`}/>
                         </Grid>
                     ))
