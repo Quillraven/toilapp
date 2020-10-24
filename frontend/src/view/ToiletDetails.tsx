@@ -12,10 +12,6 @@ const useStyles = makeStyles((theme: Theme) =>
     }),
 );
 
-interface ToiletDetailsProps {
-    toiletId: string
-}
-
 interface LocationState {
     toilet: Toilet
 }

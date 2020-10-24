@@ -4,9 +4,9 @@ import {Toilet} from "../model/Toilet";
 import {ToiletComment} from "../model/ToiletComment"
 import {RestToiletService, ToiletService} from "../services/ToiletService";
 import {
-    ExpansionPanel,
-    ExpansionPanelDetails,
-    ExpansionPanelSummary,
+    Accordion,
+    AccordionDetails,
+    AccordionSummary,
     List,
     ListItem,
     ListItemText,
@@ -47,15 +47,15 @@ export default function Comments(props: CommentsProps) {
     }, []);
 
     return (
-        <ExpansionPanel>
-            <ExpansionPanelSummary expandIcon={<ExpandMoreIcon/>}>
+        <Accordion>
+            <AccordionSummary expandIcon={<ExpandMoreIcon/>}>
                 <div>
                     <Typography>
                         View Comments
                     </Typography>
                 </div>
-            </ExpansionPanelSummary>
-            <ExpansionPanelDetails>
+            </AccordionSummary>
+            <AccordionDetails>
                 <List className={classes.root}>
                     {
                         comments.map((comment, idx) => (
@@ -86,7 +86,7 @@ export default function Comments(props: CommentsProps) {
                         ))
                     }
                 </List>
-            </ExpansionPanelDetails>
-        </ExpansionPanel>
+            </AccordionDetails>
+        </Accordion>
     );
 }
