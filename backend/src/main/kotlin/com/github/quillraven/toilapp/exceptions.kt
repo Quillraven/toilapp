@@ -8,8 +8,6 @@ import org.springframework.stereotype.Component
 import org.springframework.web.client.HttpStatusCodeException
 import org.springframework.web.reactive.function.server.ServerRequest
 
-private val LOG = LoggerFactory.getLogger(GlobalErrorAttributes::class.java)
-
 @Component
 class GlobalErrorAttributes : DefaultErrorAttributes() {
     override fun getErrorAttributes(request: ServerRequest?, options: ErrorAttributeOptions?): MutableMap<String, Any> {
@@ -23,16 +21,26 @@ class GlobalErrorAttributes : DefaultErrorAttributes() {
             }
         }
     }
+
+    companion object {
+        private val LOG = LoggerFactory.getLogger(GlobalErrorAttributes::class.java)
+    }
 }
 
 abstract class ToilappException(statusCode: HttpStatus, statusText: String) :
     HttpStatusCodeException(statusCode, statusText)
 
 class ToiletDoesNotExistException(id: String) :
-    ToilappException(HttpStatus.NOT_FOUND, "Toilet of id |$id| does not exist!")
+    ToilappException(HttpStatus.NOT_FOUND, "Toilet of id '$id' does not exist!")
 
 class PreviewImageDoesNotExistException(id: String) :
-    ToilappException(HttpStatus.NOT_FOUND, "Preview image of id |$id| does not exist!")
+    ToilappException(HttpStatus.NOT_FOUND, "Preview image of id '$id' does not exist!")
 
 class UnsupportedImageContentTypeException(fileName: String) :
-    ToilappException(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "Image |$fileName| has an unsupported type!")
+    ToilappException(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "Image '$fileName' has an unsupported type!")
+
+class UserDoesNotExistException(id: String) :
+    ToilappException(HttpStatus.NOT_FOUND, "User of id '$id' does not exist!")
+
+class CommentDoesNotExistException(id: String) :
+    ToilappException(HttpStatus.NOT_FOUND, "Comment of id '$id' does not exist!")

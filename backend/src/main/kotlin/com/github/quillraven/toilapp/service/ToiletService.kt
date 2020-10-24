@@ -1,10 +1,12 @@
 package com.github.quillraven.toilapp.service
 
 import com.github.quillraven.toilapp.ToiletDoesNotExistException
-import com.github.quillraven.toilapp.dto.ToiletResultDto
-import com.github.quillraven.toilapp.model.Toilet
+import com.github.quillraven.toilapp.model.db.Toilet
+import com.github.quillraven.toilapp.model.dto.ToiletDto
 import com.github.quillraven.toilapp.repository.ToiletRepository
+import org.bson.types.ObjectId
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.geo.Distance
 import org.springframework.data.geo.Metrics
 import org.springframework.data.geo.Point
@@ -13,42 +15,90 @@ import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 
 interface ToiletService {
-    fun create(toilet: Toilet): Mono<Toilet>
-    fun update(id: String, toilet: Toilet): Mono<Toilet>
-    fun getNearbyToilets(x: Double, y: Double, maxDistanceInMeters: Double): Flux<ToiletResultDto>
+    fun create(toilet: Toilet): Mono<ToiletDto>
+    fun update(id: String, toilet: Toilet): Mono<ToiletDto>
+    fun addComment(commentId: String, toilet: Toilet): Mono<Toilet>
+    fun removeComment(commentId: String, toilet: Toilet): Mono<Toilet>
+    fun getNearbyToilets(lon: Double, lat: Double, maxDistanceInMeters: Double): Flux<ToiletDto>
     fun getById(id: String): Mono<Toilet>
-    fun getAll(): Flux<Toilet>
+    fun getAll(): Flux<ToiletDto>
     fun delete(id: String): Mono<Void>
+    fun getByCommentId(commentId: String): Flux<Toilet>
 }
 
 @Service
-class DefaultToiletService(private val toiletRepository: ToiletRepository) : ToiletService {
-    private val LOG = LoggerFactory.getLogger(ToiletService::class.java)
+class DefaultToiletService(
+    @Autowired private val toiletRepository: ToiletRepository
+) : ToiletService {
+    lateinit var commentService: CommentService
+        @Autowired set
 
-    override fun create(toilet: Toilet): Mono<Toilet> {
-        LOG.debug("create: $toilet")
-        return toiletRepository.save(toilet)
+    lateinit var imageService: ImageService
+        @Autowired set
+
+    /**
+     * Returns a [ToiletDto] instance out of the given [toilet] and [distance].
+     * The [Toilet.previewID] is converted to a download URL of the image.
+     * Comments and images need to be fetched separately, if needed.
+     */
+    fun createToiletDto(toilet: Toilet, distance: Double = 0.0) = ToiletDto(
+        toilet.id.toHexString(),
+        toilet.title,
+        toilet.location,
+        distance,
+        getPreviewURL(toilet),
+        toilet.rating,
+        toilet.disabled,
+        toilet.toiletCrewApproved,
+        toilet.description,
+        mutableListOf(),
+        mutableListOf()
+    )
+
+    private fun getPreviewURL(toilet: Toilet): String {
+        return when {
+            toilet.previewID != null -> "/previews/${toilet.previewID.toHexString()}"
+            else -> ""
+        }
     }
 
-    override fun update(id: String, toilet: Toilet): Mono<Toilet> {
+    override fun create(toilet: Toilet): Mono<ToiletDto> {
+        LOG.debug("create: $toilet")
+        return toiletRepository
+            .save(toilet)
+            .map { createToiletDto(it) }
+    }
+
+    override fun update(id: String, toilet: Toilet): Mono<ToiletDto> {
         LOG.debug("update: (id=$id, toilet=$toilet)")
         return getById(id)
-            .flatMap { toiletRepository.save(toilet.copy(id = id)) }
+            .flatMap { toiletRepository.save(toilet.copy(id = ObjectId(id))) }
+            .map { createToiletDto(it) }
     }
 
-    override fun getNearbyToilets(x: Double, y: Double, maxDistanceInMeters: Double): Flux<ToiletResultDto> {
-        LOG.debug("getNearbyToilets: (x=$x, y=$y, maxDistanceInMeters=$maxDistanceInMeters)")
-        val position = Point(x, y)
+    override fun addComment(commentId: String, toilet: Toilet): Mono<Toilet> {
+        LOG.debug("addComment: (commentId=$commentId, toilet=$toilet)")
+        return toiletRepository.save(toilet.apply { commentRefs.add(ObjectId(commentId)) })
+    }
+
+    override fun removeComment(commentId: String, toilet: Toilet): Mono<Toilet> {
+        LOG.debug("removeComment: (commentId=$commentId, toilet=$toilet)")
+        return toiletRepository.save(toilet.apply { commentRefs.remove(ObjectId(commentId)) })
+    }
+
+    override fun getNearbyToilets(lon: Double, lat: Double, maxDistanceInMeters: Double): Flux<ToiletDto> {
+        LOG.debug("getNearbyToilets: (lon=$lon, lat=$lat, maxDistanceInMeters=$maxDistanceInMeters)")
+        val position = Point(lon, lat)
         val maxDistance = Distance(maxDistanceInMeters / 1000, Metrics.KILOMETERS)
-        //return toiletRepository.getNearbyToilets(x, y, maxDistanceInMeters)
-        val res = toiletRepository.findByLocationNear(position, maxDistance)
-        return res.map { r -> ToiletResultDto(r.content, distanceToMeter(r.distance))}
+        return toiletRepository
+            .findByLocationNear(position, maxDistance)
+            .map { createToiletDto(it.content, distanceToMeter(it.distance)) }
     }
 
     private fun distanceToMeter(distance: Distance): Double {
         return when (distance.metric) {
             Metrics.KILOMETERS -> distance.value * 1000
-            Metrics.MILES ->  distance.value * 1609.34
+            Metrics.MILES -> distance.value * 1609.34
             else -> distance.value
         }
     }
@@ -56,19 +106,46 @@ class DefaultToiletService(private val toiletRepository: ToiletRepository) : Toi
     override fun getById(id: String): Mono<Toilet> {
         LOG.debug("getById: (id=$id)")
         return toiletRepository
-            .findById(id)
+            .findById(ObjectId(id))
             .switchIfEmpty(Mono.error(ToiletDoesNotExistException(id)))
     }
 
-    override fun getAll(): Flux<Toilet> {
+    override fun getByCommentId(commentId: String): Flux<Toilet> {
+        LOG.debug("getByCommentId: (commentId=$commentId)")
+        return toiletRepository.findByCommentRefsContains(ObjectId(commentId))
+    }
+
+    override fun getAll(): Flux<ToiletDto> {
         LOG.debug("getAll")
-        return toiletRepository.findAll()
+        return toiletRepository
+            .findAll()
+            .map { createToiletDto(it) }
     }
 
     override fun delete(id: String): Mono<Void> {
         LOG.debug("delete: (id=$id)")
-        return toiletRepository.findById(id)
-            .switchIfEmpty(Mono.error(ToiletDoesNotExistException(id)))
-            .flatMap { toiletRepository.deleteById(id) }
+        return toiletRepository
+            .findById(ObjectId(id))
+            // remove any comments from the toilet
+            .flatMapMany { Flux.fromIterable(it.commentRefs) }
+            .flatMap { commentService.delete(it.toHexString()) }
+            // remove preview image
+            .then(
+                toiletRepository
+                    .findById(ObjectId(id))
+                    .flatMap {
+                        if (it.previewID != null) {
+                            imageService.delete(it.previewID.toHexString())
+                        } else {
+                            Mono.empty()
+                        }
+                    }
+            )
+            // remove toilet itself
+            .then(toiletRepository.deleteById(ObjectId(id)))
+    }
+
+    companion object {
+        private val LOG = LoggerFactory.getLogger(DefaultToiletService::class.java)
     }
 }

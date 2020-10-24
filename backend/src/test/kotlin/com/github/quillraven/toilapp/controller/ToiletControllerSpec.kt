@@ -3,13 +3,14 @@ package com.github.quillraven.toilapp.controller
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.github.quillraven.toilapp.model.ModelWithFields
 import com.github.quillraven.toilapp.model.ModelWithNoFields
-import com.github.quillraven.toilapp.model.Toilet
+import com.github.quillraven.toilapp.model.db.Toilet
+import com.github.quillraven.toilapp.model.dto.ToiletDto
 import com.github.quillraven.toilapp.repository.ToiletRepository
-import com.github.quillraven.toilapp.service.IToiletService
-import com.github.quillraven.toilapp.service.ToiletService
+import com.github.quillraven.toilapp.service.DefaultToiletService
 import io.mockk.every
 import io.mockk.mockk
 import org.amshove.kluent.`should be equal to`
+import org.bson.types.ObjectId
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest
@@ -25,7 +26,7 @@ import reactor.test.StepVerifier
 @WebFluxTest(controllers = [ToiletController::class])
 object ToiletControllerSpec : Spek({
     val toiletRepository: ToiletRepository by memoized { mockk() }
-    val toiletService: IToiletService by memoized { ToiletService(toiletRepository) }
+    val toiletService: DefaultToiletService by memoized { DefaultToiletService(toiletRepository) }
     val client by memoized {
         WebTestClient
             .bindToController(ToiletController(toiletService))
@@ -69,18 +70,23 @@ object ToiletControllerSpec : Spek({
         }
 
         it("should return flux with two toilets") {
-            every { toiletRepository.findAll() } returns Flux.just(Toilet(id = "1"), Toilet(id = "2"))
+            val toilet1 = Toilet(id = ObjectId())
+            val toilet2 = Toilet(id = ObjectId())
+            every { toiletRepository.findAll() } returns Flux.just(
+                toilet1,
+                toilet2
+            )
 
             val result = client.get().uri("/api/toilets")
                 .accept(MediaType.TEXT_EVENT_STREAM)
                 .exchange()
                 .expectStatus().isOk
-                .returnResult<Toilet>()
+                .returnResult<ToiletDto>()
                 .responseBody
 
             StepVerifier.create(result)
-                .expectNext(Toilet(id = "1"))
-                .expectNext(Toilet(id = "2"))
+                .expectNext(toiletService.createToiletDto(toilet1))
+                .expectNext(toiletService.createToiletDto(toilet2))
                 .expectComplete()
                 .verify()
         }

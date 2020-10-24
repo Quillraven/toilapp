@@ -1,6 +1,6 @@
 package com.github.quillraven.toilapp
 
-import com.github.quillraven.toilapp.model.Toilet
+import com.github.quillraven.toilapp.model.db.Toilet
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
 import org.springframework.context.event.ContextRefreshedEvent
@@ -23,7 +23,7 @@ class GeoSpatialIndexCreatorBean(val template: ReactiveMongoTemplate) {
     @EventListener
     fun onApplicationEvent(event: ContextRefreshedEvent) {
         template.indexOps(Toilet::class.java)
-                .ensureIndex(GeospatialIndex(Toilet::location.name).typed(GeoSpatialIndexType.GEO_2DSPHERE))
-                .subscribe { println("GeoSpatial index for ${Toilet::location.name} created") }
+            .ensureIndex(GeospatialIndex(Toilet::location.name).typed(GeoSpatialIndexType.GEO_2DSPHERE))
+            .subscribe { println("GeoSpatial index for ${Toilet::location.name} created") }
     }
 }

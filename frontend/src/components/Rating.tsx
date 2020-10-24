@@ -9,7 +9,7 @@ export function RatingView(props: { rating: number, size?: string }) {
     return (
         <Box display="flex" flex={1} flexDirection="row" justifyContent="center">
             {[0, 1, 2, 3, 4].map((idx) => (
-                <div style={{ width: sizeNum, height: sizeNum }}><RatingElement rating={props.rating} index={idx} /></div>
+                <div style={{width: sizeNum, height: sizeNum}}><RatingElement rating={props.rating} index={idx}/></div>
             ))}
         </Box>
     );
@@ -37,12 +37,12 @@ export function RatingSelect(props: { rating?: number, size?: string, onRatingCh
     return (
         <Box display="flex" flex="1" flexDirection="row" justifyContent="center">
             {[0, 1, 2, 3, 4].map((idx) => (
-                <div style={{ width: sizeNum, height: sizeNum }}
-                    onClick={() => ratingLocked(idx)}
-                    onMouseEnter={() => mouseEnter(idx)}
-                    onMouseLeave={mouseExit}
+                <div style={{width: sizeNum, height: sizeNum}}
+                     onClick={() => ratingLocked(idx)}
+                     onMouseEnter={() => mouseEnter(idx)}
+                     onMouseLeave={mouseExit}
                 >
-                    <RatingElement rating={displayRating} index={idx} />
+                    <RatingElement rating={displayRating} index={idx}/>
                 </div>
             ))}
         </Box>
@@ -52,7 +52,7 @@ export function RatingSelect(props: { rating?: number, size?: string, onRatingCh
 function getSizeNum(size: string): number {
     switch (size) {
         case 'XS': {
-            return 16
+            return 18
         }
         case 'S': {
             return 32;
@@ -80,5 +80,5 @@ function RatingElement(props: { rating: number, index: number }) {
         iconName = 'poo';
     }
     let iconUrl = `rating/${iconName}.png`
-    return <img style={{ width: '100%', height: '100%' }} src={iconUrl} />
+    return <img style={{width: '100%', height: '100%'}} src={iconUrl} alt={`Rating${props.rating}`}/>
 }

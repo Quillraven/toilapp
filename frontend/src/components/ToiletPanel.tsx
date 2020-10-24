@@ -1,7 +1,5 @@
 import {createStyles, makeStyles, Theme} from "@material-ui/core/styles";
-import {ToiletResult} from "../services/ToiletService";
 import {
-    Box,
     Button,
     ExpansionPanel,
     ExpansionPanelActions,
@@ -11,7 +9,9 @@ import {
 } from "@material-ui/core";
 import React from "react";
 import ExpandMoreIcon from "@material-ui/icons/ExpandMore"
-import { RatingView } from "./Rating";
+import {RatingView} from "./Rating";
+import {Toilet} from "../model/Toilet";
+import Comments from "./Comments";
 
 const useStyles = makeStyles((theme: Theme) =>
     createStyles({
@@ -36,30 +36,32 @@ const useStyles = makeStyles((theme: Theme) =>
 );
 
 interface ToiletPanelProps {
-    toilet: ToiletResult
+    toilet: Toilet
 }
 
 export default function ToiletPanel(props: ToiletPanelProps) {
     const classes = useStyles();
     const toilet = props.toilet;
+
     let distanceStr = toilet.distance.toFixed(0) + "m";
-    if(toilet.distance >= 1000) {
+    if (toilet.distance >= 1000) {
         distanceStr = (toilet.distance / 1000).toFixed(1) + "km";
-    } else if(toilet.distance < 0) {
+    } else if (toilet.distance < 0) {
         distanceStr = "-";
     }
+
     return (
         <ExpansionPanel>
             <ExpansionPanelSummary expandIcon={<ExpandMoreIcon/>}>
                 <div className={classes.column}>
                     <Typography className={classes.heading}>
-                        {toilet.toilet.title}
+                        {toilet.title}
                     </Typography>
                 </div>
                 <div className={classes.column}>
-                    <Box display="flex" width="100%" height="100%" justifyItems="center" alignItems="center">
-                        <RatingView size="XS" rating={toilet.toilet.rating} />
-                    </Box>
+                    <Typography className={classes.hintHeading}>
+                        <RatingView size="XS" rating={toilet.rating}/>
+                    </Typography>
                 </div>
                 <div className={classes.column}>
                     <Typography className={classes.hintHeading}>
@@ -70,14 +72,18 @@ export default function ToiletPanel(props: ToiletPanelProps) {
             <ExpansionPanelDetails>
                 <div className={classes.content}>
                     {
-                        toilet.toilet.previewImage &&
-                        <img src={toilet.toilet.previewImage} alt={toilet.toilet.id} width="100%"/>
+                        toilet.previewURL &&
+                        <img src={toilet.previewURL} alt={toilet.id} width="100%"/>
                     }
                     <Typography variant="h3">
-                        {props.toilet.toilet.title}
+                        {props.toilet.title}
                     </Typography>
                     <Typography variant="h5">
-                        {props.toilet.toilet.description}
+                        {props.toilet.description}
+                    </Typography>
+
+                    <Typography variant="button">
+                        <Comments toilet={toilet}/>
                     </Typography>
                 </div>
             </ExpansionPanelDetails>
