@@ -5,7 +5,7 @@ import React from "react";
 import {AccountCircle} from "@material-ui/icons";
 import MenuIcon from "@material-ui/icons/Menu";
 import ArrowBack from "@material-ui/icons/ArrowBack";
-import { useHistory } from "react-router-dom";
+import {useHistory} from "react-router-dom";
 
 const useStyles = makeStyles((theme: Theme) =>
     createStyles({
@@ -19,12 +19,6 @@ const useStyles = makeStyles((theme: Theme) =>
             display: 'none',
             [theme.breakpoints.up('sm')]: {
                 display: 'block',
-            },
-        },
-        sectionDesktop: {
-            display: 'none',
-            [theme.breakpoints.up('md')]: {
-                display: 'flex',
             },
         },
     }),
@@ -66,18 +60,8 @@ export default function NavigationBar() {
     console.log("hist location", hist.location);
     return (
         <div className={classes.grow}>
-            <AppBar position="static">
+            <AppBar position="fixed">
                 <Toolbar>
-                    <div style={{display: location === "/" ? "none" : "block"}}>
-                        <IconButton
-                            edge="start"
-                            className={classes.menuButton}
-                            color="inherit"
-                            onClick={() => hist.goBack()}
-                            aria-label="back">
-                            <ArrowBack/>
-                        </IconButton>
-                    </div>
                     <IconButton
                         edge="start"
                         className={classes.menuButton}
@@ -86,22 +70,27 @@ export default function NavigationBar() {
                         <MenuIcon/>
                     </IconButton>
                     <Typography
-                        className={classes.title}
                         variant="h6"
                         noWrap>
                         Toilapp
                     </Typography>
                     <div className={classes.grow}/>
-                    <div
-                        className={classes.sectionDesktop}>
+                    <IconButton
+                        edge="end"
+                        aria-label="account of current user"
+                        aria-controls={menuId}
+                        aria-haspopup="true"
+                        onClick={handleProfileMenuOpen}
+                        color="inherit">
+                        <AccountCircle/>
+                    </IconButton>
+                    <div style={{display: location === "/" ? "none" : "block"}}>
                         <IconButton
                             edge="end"
-                            aria-label="account of current user"
-                            aria-controls={menuId}
-                            aria-haspopup="true"
-                            onClick={handleProfileMenuOpen}
-                            color="inherit">
-                            <AccountCircle/>
+                            color="inherit"
+                            onClick={() => hist.goBack()}
+                            aria-label="back">
+                            <ArrowBack/>
                         </IconButton>
                     </div>
                 </Toolbar>
