@@ -8,6 +8,8 @@ export interface ToiletService {
     getToilets(geoLocation: GeoLocation): Promise<Toilet[]>
 
     getComments(toilet: Toilet): Promise<ToiletComment[]>
+
+    postComment(toiletId: string, userId: string, text: string): Promise<ToiletComment>
 }
 
 export class RestToiletService implements ToiletService {
@@ -41,6 +43,22 @@ export class RestToiletService implements ToiletService {
                 return response.data
             }, error => {
                 console.error(`Could not get comments for toilet '${toilet.id}'. Error=${error}`)
+            })
+    }
+
+    public postComment(toiletId: string, userId: string, text: string): Promise<ToiletComment> {
+        return axios
+            .post(API_ENDPOINT + `/comments/?toiletId=${toiletId}&userId=${userId}&text=${encodeURI(text)}`)
+            .then(response => {
+                const comment: ToiletComment = response.data
+
+                // TODO is there a way to retrieve already a correct date instance from REST directly?
+                //  we currently receive a string
+                comment.date = new Date(comment.date)
+
+                return response.data
+            }, error => {
+                console.error(`Could not post comment for toilet '${toiletId}'. Error=${error}`)
             })
     }
 }
@@ -110,6 +128,22 @@ export class MockToiletService implements ToiletService {
         return new Promise<ToiletComment[]>(function (resolve) {
             const comments: ToiletComment[] = []
             resolve(comments)
+        })
+    }
+
+    postComment(toiletId: string, userId: string, text: string): Promise<ToiletComment> {
+        return new Promise<ToiletComment>(function (resolve) {
+            const comment: ToiletComment = {
+                id: "",
+                user: {
+                    name: "",
+                    email: "",
+                    id: ""
+                },
+                date: new Date(),
+                text: ""
+            }
+            resolve(comment)
         })
     }
 }

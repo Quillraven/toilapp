@@ -1,4 +1,4 @@
-import {Grid, Typography} from "@material-ui/core";
+import {Divider, Grid, Typography} from "@material-ui/core";
 import React from "react";
 import {RatingView} from "./Rating";
 import {Toilet} from "../model/Toilet";
@@ -39,11 +39,11 @@ export default function ToiletDetailsItem(props: ToiletDetailsItemProps) {
                     <Typography>
                         {toilet.description}
                     </Typography>
+                    <br/>
+                    <Divider variant="middle"/>
+                    <Comments toilet={toilet}/>
                 </Grid>
             </Grid>
-            <div>
-                <Comments toilet={toilet}/>
-            </div>
         </React.Fragment>
     )
 }
