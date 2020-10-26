@@ -121,6 +121,7 @@ class DefaultCommentService(
             // and add user name information to each comment
             .flatMap { Mono.just(it).zipWith(userService.getById(it.userRef.toHexString())) }
             .map { createCommentDto(it.t1, it.t2) }
+            .sort { o1, o2 -> o2.date.compareTo(o1.date) }
     }
 
     companion object {
