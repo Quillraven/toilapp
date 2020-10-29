@@ -12,7 +12,6 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
-import java.net.URLDecoder
 import java.util.*
 
 interface CommentService {
@@ -90,10 +89,9 @@ class DefaultCommentService(
             // check if user is valid
             .getById(userId)
             // if yes -> create new comment
-            .flatMap { Mono.fromCallable { URLDecoder.decode(text, "UTF-8") } }
             .flatMap {
-                LOG.debug("Found user '$userId' for comment '$it'")
-                create(userId, it)
+                LOG.debug("Found user '$userId' for comment '$text'")
+                create(userId, text)
             }
             // if it was created successfully -> link it to toilet
             .zipWith(toiletService.getById(toiletId))

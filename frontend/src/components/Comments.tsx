@@ -31,6 +31,9 @@ const useStyles = makeStyles((theme: Theme) =>
         commentGridList: {
             height: 200,
         },
+        commentDiv: {
+            whiteSpace: "pre-wrap"
+        }
     }),
 );
 
@@ -51,7 +54,7 @@ export default function Comments(props: CommentsProps) {
     const postComment = () => {
         // TODO retrieve correct user id
         toiletService
-            .postComment(props.toilet.id, "5f8c0cec25209253b4a2e31e", newCommentText)
+            .postComment(props.toilet.id, "5f9a860c37934c6ee3f49f6c", newCommentText)
             .then(() => {
                 console.log("Comment posted")
                 setNewCommentText("")
@@ -104,7 +107,7 @@ export default function Comments(props: CommentsProps) {
                 <GridList cellHeight="auto" className={classes.commentGridList} cols={1}>
                     {
                         comments.map((comment, idx) => (
-                            <div key={`Comment-${props.toilet.id}-${idx}`}>
+                            <div className={classes.commentDiv} key={`Comment-${props.toilet.id}-${idx}`}>
                                 <GridListTile>
                                     <Typography color="textSecondary">
                                         {comment.date.toLocaleTimeString(navigator.language, {

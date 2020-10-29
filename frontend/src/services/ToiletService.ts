@@ -47,8 +47,11 @@ export class RestToiletService implements ToiletService {
     }
 
     public postComment(toiletId: string, userId: string, text: string): Promise<ToiletComment> {
+        const encodedText = encodeURIComponent(text)
+        console.log(`Posting '${encodedText}'`)
+
         return axios
-            .post(API_ENDPOINT + `/comments/?toiletId=${toiletId}&userId=${userId}&text=${encodeURI(text)}`)
+            .post(API_ENDPOINT + `/comments/?toiletId=${toiletId}&userId=${userId}&text=${encodedText}`)
             .then(response => {
                 const comment: ToiletComment = response.data
 
