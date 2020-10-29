@@ -60,9 +60,8 @@ export default function Comments(props: CommentsProps) {
     }
 
     const postComment = () => {
-        // TODO retrieve correct user id
         toiletService
-            .postComment(props.toilet.id, "5f9a860c37934c6ee3f49f6c", newCommentText)
+            .postComment(props.toilet.id, newCommentText)
             .then(response => {
                 if (response) {
                     console.log("Comment posted")

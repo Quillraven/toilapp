@@ -118,7 +118,7 @@ class DataLoaderRunner(
         val commentMonoList = mutableListOf<Mono<CommentDto>>()
         for (i in 0..5) {
             val user = users.random()
-            commentMonoList.add(commentService.create(user.id, commentTexts.random()))
+            commentMonoList.add(commentService.create(ObjectId(user.id), commentTexts.random()))
         }
         return Flux.fromIterable(commentMonoList).flatMap { it }.collectList()
     }
@@ -158,7 +158,8 @@ class DataLoaderRunner(
                 disabled = false,
                 toiletCrewApproved = false,
                 description = description,
-                commentRefs = comments.subList(Random.nextInt(4), comments.size).map { ObjectId(it.id) }.toMutableList(),
+                commentRefs = comments.subList(Random.nextInt(4), comments.size).map { ObjectId(it.id) }
+                    .toMutableList(),
                 imageRefs = mutableListOf()
             )
             toiletService.create(toilet)

@@ -6,3 +6,9 @@ export interface ToiletComment {
     date: Date,
     text: string,
 }
+
+export interface CreateUpdateComment {
+    commentId: string,
+    toiletId: string,
+    text: string,
+}

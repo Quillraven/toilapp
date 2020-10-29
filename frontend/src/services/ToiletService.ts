@@ -2,14 +2,14 @@ import {API_ENDPOINT} from "./ServiceConstants";
 import axios from "axios";
 import {Toilet} from "../model/Toilet";
 import {GeoLocation} from "../model/GeoLocation";
-import {ToiletComment} from "../model/ToiletComment";
+import {CreateUpdateComment, ToiletComment} from "../model/ToiletComment";
 
 export interface ToiletService {
     getToilets(geoLocation: GeoLocation): Promise<Toilet[]>
 
     getComments(toilet: Toilet): Promise<ToiletComment[]>
 
-    postComment(toiletId: string, userId: string, text: string): Promise<ToiletComment>
+    postComment(toiletId: string, text: string): Promise<ToiletComment>
 }
 
 export class RestToiletService implements ToiletService {
@@ -46,12 +46,18 @@ export class RestToiletService implements ToiletService {
             })
     }
 
-    public postComment(toiletId: string, userId: string, text: string): Promise<ToiletComment> {
-        const encodedText = encodeURIComponent(text)
-        console.log(`Posting '${encodedText}'`)
+    public postComment(toiletId: string, text: string): Promise<ToiletComment> {
+        console.log(`Posting '${text}'`)
 
         return axios
-            .post(API_ENDPOINT + `/comments/?toiletId=${toiletId}&userId=${userId}&text=${encodedText}`)
+            .post(
+                API_ENDPOINT + `/comments`,
+                {
+                    commentId: "",
+                    toiletId: toiletId,
+                    text: text,
+                } as CreateUpdateComment
+            )
             .then(response => {
                 const comment: ToiletComment = response.data
 
@@ -134,7 +140,7 @@ export class MockToiletService implements ToiletService {
         })
     }
 
-    postComment(toiletId: string, userId: string, text: string): Promise<ToiletComment> {
+    postComment(toiletId: string, text: string): Promise<ToiletComment> {
         return new Promise<ToiletComment>(function (resolve) {
             const comment: ToiletComment = {
                 id: "",

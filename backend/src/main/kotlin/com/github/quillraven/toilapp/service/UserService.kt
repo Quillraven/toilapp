@@ -13,6 +13,8 @@ import reactor.core.publisher.Mono
 interface UserService {
     fun create(user: User): Mono<UserDto>
     fun getById(id: String): Mono<User>
+    fun getById(objectId: ObjectId): Mono<User>
+    fun getCurrentUser(): ObjectId
 }
 
 @Service
@@ -35,11 +37,18 @@ class DefaultUserService(
             .map { createUserDto(it) }
     }
 
-    override fun getById(id: String): Mono<User> {
-        LOG.debug("getById: (id=$id)")
+    override fun getById(objectId: ObjectId): Mono<User> {
+        LOG.debug("getById: (id=$objectId)")
         return userRepository
-            .findById(ObjectId(id))
-            .switchIfEmpty(Mono.error(UserDoesNotExistException(id)))
+            .findById(objectId)
+            .switchIfEmpty(Mono.error(UserDoesNotExistException(objectId.toHexString())))
+    }
+
+    override fun getById(id: String) = getById(ObjectId(id))
+
+    override fun getCurrentUser(): ObjectId {
+        //TODO return user from request
+        return ObjectId("5f9a860c37934c6ee3f49f6c")
     }
 
     companion object {
