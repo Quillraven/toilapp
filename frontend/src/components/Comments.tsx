@@ -4,8 +4,9 @@ import {Toilet} from "../model/Toilet";
 import {ToiletComment} from "../model/ToiletComment"
 import {RestToiletService, ToiletService} from "../services/ToiletService";
 import TextField from "@material-ui/core/TextField"
-import {Divider, GridList, GridListTile, IconButton, Typography} from "@material-ui/core";
+import {Divider, GridList, GridListTile, IconButton, Snackbar, Typography} from "@material-ui/core";
 import {Send} from "@material-ui/icons";
+import {Alert, Color} from "@material-ui/lab";
 
 const useStyles = makeStyles((theme: Theme) =>
     createStyles({
@@ -37,6 +38,12 @@ const useStyles = makeStyles((theme: Theme) =>
     }),
 );
 
+interface AlertState {
+    text: string
+    show: boolean
+    severity: Color
+}
+
 interface CommentsProps {
     toilet: Toilet
 }
@@ -45,6 +52,7 @@ export default function Comments(props: CommentsProps) {
     const classes = useStyles();
     const [comments, setComments] = useState<ToiletComment[]>([]);
     const [newCommentText, setNewCommentText] = useState<string>("")
+    const [alert, setAlert] = useState<AlertState>({text: "", show: false, severity: "info"})
     const toiletService: ToiletService = new RestToiletService();
 
     const updateComment = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -55,16 +63,28 @@ export default function Comments(props: CommentsProps) {
         // TODO retrieve correct user id
         toiletService
             .postComment(props.toilet.id, "5f9a860c37934c6ee3f49f6c", newCommentText)
-            .then(() => {
-                console.log("Comment posted")
-                setNewCommentText("")
-                return toiletService.getComments(props.toilet)
+            .then(response => {
+                if (response) {
+                    console.log("Comment posted")
+                    setNewCommentText("")
+                    setAlert({text: "Successfully posted comment!", show: true, severity: "success"})
+                    return toiletService.getComments(props.toilet)
+                }
+                throw Error("Could not post comment")
             })
             .then(comments => {
                 console.log(`New comments: ${comments.length}`)
                 setComments(comments)
             })
+            .catch((error) => {
+                setAlert({text: "Could not post comment!", show: true, severity: "error"})
+                console.error(`Error while posting comment: ${error}`)
+            })
     };
+
+    const closeAlert = () => {
+        setAlert({text: "", show: false, severity: "info"})
+    }
 
     useEffect(() => {
         toiletService
@@ -130,6 +150,11 @@ export default function Comments(props: CommentsProps) {
                         ))
                     }
                 </GridList>
+                <Snackbar open={alert.show} autoHideDuration={6000} onClose={closeAlert}>
+                    <Alert severity={alert.severity} onClose={closeAlert}>
+                        {alert.text}
+                    </Alert>
+                </Snackbar>
             </div>
         </React.Fragment>
     );
