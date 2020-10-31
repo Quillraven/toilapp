@@ -93,7 +93,7 @@ class DefaultCommentService(
     }
 
     override fun createAndLink(createUpdateCommentDto: CreateUpdateCommentDto): Mono<CommentDto> {
-        val userId = userService.getCurrentUser()
+        val userId = userService.getCurrentUserId()
         LOG.debug("createAndLink: (userId=$userId, text=${createUpdateCommentDto.text}, toiletId=${createUpdateCommentDto.toiletId})")
         return userService
             // check if user is valid

@@ -11,6 +11,5 @@ interface ImageService {
     fun create(filePartMono: Mono<FilePart>): Mono<String>
     fun get(id: String): Mono<ByteArray>
     fun store(inStreamCallable: Callable<InputStream>, name: String): Mono<ObjectId>
-    fun createAndLinkImage(file: Mono<FilePart>, toiletId: String): Mono<ToiletDto>
     fun delete(id: String): Mono<Void>
 }

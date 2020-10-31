@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.geo.Distance
 import org.springframework.data.geo.Metrics
 import org.springframework.data.geo.Point
+import org.springframework.http.codec.multipart.FilePart
 import org.springframework.stereotype.Service
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
@@ -24,17 +25,15 @@ interface ToiletService {
     fun getAll(): Flux<ToiletDto>
     fun delete(id: String): Mono<Void>
     fun getByCommentId(commentId: String): Flux<Toilet>
+    fun createAndLinkImage(file: Mono<FilePart>, toiletId: String): Mono<ToiletDto>
 }
 
 @Service
 class DefaultToiletService(
-    @Autowired private val toiletRepository: ToiletRepository
+    @Autowired private val toiletRepository: ToiletRepository,
+    @Autowired private val commentService: CommentService,
+    @Autowired private val imageService: ImageService
 ) : ToiletService {
-    lateinit var commentService: CommentService
-        @Autowired set
-
-    lateinit var imageService: ImageService
-        @Autowired set
 
     /**
      * Returns a [ToiletDto] instance out of the given [toilet] and [distance].
@@ -143,6 +142,17 @@ class DefaultToiletService(
             )
             // remove toilet itself
             .then(toiletRepository.deleteById(ObjectId(id)))
+    }
+
+    override fun createAndLinkImage(file: Mono<FilePart>, toiletId: String): Mono<ToiletDto> {
+        DefaultToiletService.LOG.debug("createAndLinkImage: (toiletId=$toiletId)")
+        return getById(toiletId)
+                .zipWith(imageService.create(file))
+                .flatMap {
+                    val toilet = it.t1
+                    val fileId = it.t2
+                    update(toiletId, toilet.copy(previewID = ObjectId(fileId)))
+                }
     }
 
     companion object {

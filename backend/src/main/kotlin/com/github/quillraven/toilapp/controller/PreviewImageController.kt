@@ -1,6 +1,7 @@
 package com.github.quillraven.toilapp.controller
 
 import com.github.quillraven.toilapp.service.ImageService
+import com.github.quillraven.toilapp.service.ToiletService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.http.codec.multipart.FilePart
@@ -18,7 +19,8 @@ import reactor.core.publisher.Mono
 @RestController
 @RequestMapping("/api")
 class PreviewImageController(
-    @Autowired private val imageService: ImageService
+    @Autowired private val imageService: ImageService,
+    @Autowired private val toiletService: ToiletService
 ) {
     /*
       FIXME: Transactional is currently not supported by GridFS and therefore we could potentially
@@ -29,7 +31,7 @@ class PreviewImageController(
     fun createPreviewImage(
         @RequestPart("file") file: Mono<FilePart>,
         @RequestParam("toiletId") toiletId: String
-    ) = imageService.createAndLinkImage(file, toiletId)
+    ) = toiletService.createAndLinkImage(file, toiletId)
 
     @GetMapping(
         value = ["/previews/{id}"],

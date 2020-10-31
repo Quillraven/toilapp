@@ -24,8 +24,6 @@ class GrisFsImageService(
     @Qualifier("reactiveGridFsTemplateForImages")
     @Autowired private val gridFsTemplate: ReactiveGridFsTemplate
 ) : ImageService {
-    lateinit var toiletService: ToiletService
-        @Autowired set
 
     override fun create(filePartMono: Mono<FilePart>): Mono<String> {
         return filePartMono
@@ -89,18 +87,6 @@ class GrisFsImageService(
             DefaultDataBufferFactory.DEFAULT_INITIAL_CAPACITY
         )
         return gridFsTemplate.store(flux, "myName")
-    }
-
-    override fun createAndLinkImage(file: Mono<FilePart>, toiletId: String): Mono<ToiletDto> {
-        LOG.debug("createAndLinkImage: (toiletId=$toiletId)")
-        return toiletService
-            .getById(toiletId)
-            .zipWith(create(file))
-            .flatMap {
-                val toilet = it.t1
-                val fileId = it.t2
-                toiletService.update(toiletId, toilet.copy(previewID = ObjectId(fileId)))
-            }
     }
 
     companion object {

@@ -105,6 +105,8 @@ class DataLoaderRunner(
     private fun createUsers(): Mono<List<UserDto>> {
         val userMonoList = mutableListOf<Mono<UserDto>>()
         //create users
+        val devUser = User(ObjectId("000000000000012343456789"), "devuser", "devuser@mail.com")
+        userMonoList.add(userService.create(devUser))
         for (usrName in userNames) {
             val userName = userNames[Random.nextInt(0, userNames.size)]
             val email = "$userName@mail.com"
