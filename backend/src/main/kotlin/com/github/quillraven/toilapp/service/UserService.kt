@@ -8,7 +8,6 @@ import com.github.quillraven.toilapp.repository.UserRepository
 import org.bson.types.ObjectId
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.data.domain.Example
 import org.springframework.stereotype.Service
 import reactor.core.publisher.Mono
 
@@ -49,16 +48,19 @@ class DefaultUserService(
     override fun getById(id: String) = getById(ObjectId(id))
 
     override fun getCurrentUserId(): ObjectId {
-        if(ToilappSystemProperties.isDevMode()) {
-            //return dev user created by DataLoaderApplication
-            return ObjectId("000000000000012343456789")
-        } else {
-            //TODO return user from request
-            return ObjectId("000000000000012343456789")
+        return when {
+            ToilappSystemProperties.isDevMode() -> {
+                //return dev user created by DataLoaderApplication
+                ObjectId("000000000000012343456789")
+            }
+            else -> {
+                //TODO return user from request
+                ObjectId("000000000000012343456789")
+            }
         }
     }
 
     companion object {
-        private val LOG = LoggerFactory.getLogger(DefaultUserService::class.java);
+        private val LOG = LoggerFactory.getLogger(DefaultUserService::class.java)
     }
 }

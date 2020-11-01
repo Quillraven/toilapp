@@ -145,14 +145,14 @@ class DefaultToiletService(
     }
 
     override fun createAndLinkImage(file: Mono<FilePart>, toiletId: String): Mono<ToiletDto> {
-        DefaultToiletService.LOG.debug("createAndLinkImage: (toiletId=$toiletId)")
+        LOG.debug("createAndLinkImage: (toiletId=$toiletId)")
         return getById(toiletId)
-                .zipWith(imageService.create(file))
-                .flatMap {
-                    val toilet = it.t1
-                    val fileId = it.t2
-                    update(toiletId, toilet.copy(previewID = ObjectId(fileId)))
-                }
+            .zipWith(imageService.create(file))
+            .flatMap {
+                val toilet = it.t1
+                val fileId = it.t2
+                update(toiletId, toilet.copy(previewID = ObjectId(fileId)))
+            }
     }
 
     companion object {

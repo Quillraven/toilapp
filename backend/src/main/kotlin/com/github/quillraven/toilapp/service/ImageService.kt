@@ -1,6 +1,5 @@
 package com.github.quillraven.toilapp.service
 
-import com.github.quillraven.toilapp.model.dto.ToiletDto
 import org.bson.types.ObjectId
 import org.springframework.http.codec.multipart.FilePart
 import reactor.core.publisher.Mono
