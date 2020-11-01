@@ -2,7 +2,6 @@ package com.github.quillraven.toilapp.service
 
 import com.github.quillraven.toilapp.PreviewImageDoesNotExistException
 import com.github.quillraven.toilapp.UnsupportedImageContentTypeException
-import com.github.quillraven.toilapp.model.dto.ToiletDto
 import org.bson.types.ObjectId
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
@@ -20,7 +19,7 @@ import java.io.InputStream
 import java.util.concurrent.Callable
 
 @Service
-class GrisFsImageService(
+class GridFsImageService(
     @Qualifier("reactiveGridFsTemplateForImages")
     @Autowired private val gridFsTemplate: ReactiveGridFsTemplate
 ) : ImageService {
@@ -90,6 +89,6 @@ class GrisFsImageService(
     }
 
     companion object {
-        private val LOG = LoggerFactory.getLogger(GrisFsImageService::class.java)
+        private val LOG = LoggerFactory.getLogger(GridFsImageService::class.java)
     }
 }
