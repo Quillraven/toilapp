@@ -2,19 +2,31 @@ package com.github.quillraven.toilapp.service
 
 import com.github.quillraven.toilapp.ToiletDoesNotExistException
 import com.github.quillraven.toilapp.model.db.Toilet
+import com.github.quillraven.toilapp.repository.CommentRepository
 import com.github.quillraven.toilapp.repository.ToiletRepository
 import io.mockk.every
 import io.mockk.mockk
 import org.bson.types.ObjectId
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
+import org.springframework.data.mongodb.gridfs.ReactiveGridFsTemplate
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import reactor.test.StepVerifier
 
 object ToiletServiceSpec : Spek({
     val toiletRepository: ToiletRepository by memoized { mockk<ToiletRepository>() }
-    val toiletService: DefaultToiletService by memoized { DefaultToiletService(toiletRepository) }
+    val commentRepository: CommentRepository by memoized { mockk<CommentRepository>() }
+    val gridFsTemplate: ReactiveGridFsTemplate by memoized { mockk<ReactiveGridFsTemplate>() }
+    val commentService: DefaultCommentService by memoized { DefaultCommentService(commentRepository) }
+    val imageService: GridFsImageService by memoized { GridFsImageService(gridFsTemplate) }
+    val toiletService: DefaultToiletService by memoized {
+        DefaultToiletService(
+            toiletRepository,
+            commentService,
+            imageService
+        )
+    }
 
     describe("A Toilet service") {
         it("should create a new toilet") {

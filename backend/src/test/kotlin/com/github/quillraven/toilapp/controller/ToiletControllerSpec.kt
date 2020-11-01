@@ -5,8 +5,11 @@ import com.github.quillraven.toilapp.model.ModelWithFields
 import com.github.quillraven.toilapp.model.ModelWithNoFields
 import com.github.quillraven.toilapp.model.db.Toilet
 import com.github.quillraven.toilapp.model.dto.ToiletDto
+import com.github.quillraven.toilapp.repository.CommentRepository
 import com.github.quillraven.toilapp.repository.ToiletRepository
+import com.github.quillraven.toilapp.service.DefaultCommentService
 import com.github.quillraven.toilapp.service.DefaultToiletService
+import com.github.quillraven.toilapp.service.GridFsImageService
 import io.mockk.every
 import io.mockk.mockk
 import org.amshove.kluent.`should be equal to`
@@ -15,6 +18,7 @@ import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest
 import org.springframework.data.mongodb.core.geo.GeoJsonModule
+import org.springframework.data.mongodb.gridfs.ReactiveGridFsTemplate
 import org.springframework.http.MediaType
 import org.springframework.http.codec.json.Jackson2JsonDecoder
 import org.springframework.http.codec.json.Jackson2JsonEncoder
@@ -26,7 +30,17 @@ import reactor.test.StepVerifier
 @WebFluxTest(controllers = [ToiletController::class])
 object ToiletControllerSpec : Spek({
     val toiletRepository: ToiletRepository by memoized { mockk<ToiletRepository>() }
-    val toiletService: DefaultToiletService by memoized { DefaultToiletService(toiletRepository) }
+    val commentRepository: CommentRepository by memoized { mockk<CommentRepository>() }
+    val gridFsTemplate: ReactiveGridFsTemplate by memoized { mockk<ReactiveGridFsTemplate>() }
+    val commentService: DefaultCommentService by memoized { DefaultCommentService(commentRepository) }
+    val imageService: GridFsImageService by memoized { GridFsImageService(gridFsTemplate) }
+    val toiletService: DefaultToiletService by memoized {
+        DefaultToiletService(
+            toiletRepository,
+            commentService,
+            imageService
+        )
+    }
     val client by memoized {
         WebTestClient
             .bindToController(ToiletController(toiletService))
