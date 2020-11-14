@@ -44,3 +44,6 @@ class UserDoesNotExistException(id: String) :
 
 class CommentDoesNotExistException(id: String) :
     ToilappException(HttpStatus.NOT_FOUND, "Comment of id '$id' does not exist!")
+
+class RatingDoesNotExistException(id: String) :
+    ToilappException(HttpStatus.NOT_FOUND, "Rating of id '$id' does not exist!")

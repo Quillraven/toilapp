@@ -1,6 +1,6 @@
 package com.github.quillraven.toilapp.controller
 
-import com.github.quillraven.toilapp.model.db.Toilet
+import com.github.quillraven.toilapp.model.dto.CreateUpdateToiletDto
 import com.github.quillraven.toilapp.model.dto.ToiletDto
 import com.github.quillraven.toilapp.service.ToiletService
 import org.springframework.beans.factory.annotation.Autowired
@@ -30,10 +30,12 @@ class ToiletController(
     @Autowired private val toiletService: ToiletService
 ) {
     @PostMapping("/toilets")
-    fun createToilet(@RequestBody toilet: Toilet) = toiletService.create(toilet)
+    fun createToilet(@RequestBody createUpdateToiletDto: CreateUpdateToiletDto) =
+        toiletService.create(createUpdateToiletDto)
 
-    @PutMapping("/toilets/{id}")
-    fun updateToilet(@PathVariable id: String, @RequestBody toilet: Toilet) = toiletService.update(id, toilet)
+    @PutMapping("/toilets")
+    fun updateToilet(@RequestBody createUpdateToiletDto: CreateUpdateToiletDto) =
+        toiletService.update(createUpdateToiletDto)
 
     @GetMapping("/toilets")
     fun getNearbyToilets(
@@ -53,4 +55,7 @@ class ToiletController(
 
     @DeleteMapping("/toilets/{id}")
     fun deleteToilet(@PathVariable id: String) = toiletService.delete(id)
+
+    @GetMapping("/comments/{toiletId}")
+    fun getComments(@PathVariable toiletId: String) = toiletService.getComments(toiletId)
 }

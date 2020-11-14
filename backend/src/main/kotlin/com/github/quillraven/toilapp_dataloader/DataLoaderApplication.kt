@@ -3,10 +3,11 @@ package com.github.quillraven.toilapp_dataloader
 import com.github.quillraven.toilapp.configuration.MongoConfiguration
 import com.github.quillraven.toilapp.model.db.Toilet
 import com.github.quillraven.toilapp.model.db.User
-import com.github.quillraven.toilapp.model.dto.CommentDto
+import com.github.quillraven.toilapp.model.dto.CreateUpdateCommentDto
+import com.github.quillraven.toilapp.model.dto.CreateUpdateRatingDto
+import com.github.quillraven.toilapp.model.dto.CreateUpdateToiletDto
 import com.github.quillraven.toilapp.model.dto.ToiletDto
 import com.github.quillraven.toilapp.model.dto.UserDto
-import com.github.quillraven.toilapp.service.CommentService
 import com.github.quillraven.toilapp.service.ImageService
 import com.github.quillraven.toilapp.service.ToiletService
 import com.github.quillraven.toilapp.service.UserService
@@ -83,18 +84,18 @@ class DataLoaderRunner(
     @Autowired private val imgService: ImageService,
     @Autowired private val toiletService: ToiletService,
     @Autowired private val userService: UserService,
-    @Autowired private val commentService: CommentService,
     @Autowired private val context: ConfigurableApplicationContext
 ) : CommandLineRunner {
 
-    val numToilets = 20
+    val numToilets = 1
 
     override fun run(vararg args: String?) {
         createUsers()
-            .flatMap { createComments(it) }
-            .flatMap { createToilets(it) }
+            .flatMap { createToilets().zipWith(Mono.just(it)) }
+            .flatMap { createComments(it.t1, it.t2).zipWith(Mono.just(it)) }
+            .flatMap { createRatings(it.t2.t1, it.t2.t2) }
             .subscribe {
-                println("${it.size} toilets created on thread ${Thread.currentThread()}")
+                println("$numToilets toilets created on thread ${Thread.currentThread()}")
                 GlobalScope.launch {
                     println("Shutdown on thread ${Thread.currentThread()}")
                     exitProcess(SpringApplication.exit(context))
@@ -116,56 +117,74 @@ class DataLoaderRunner(
         return Flux.fromIterable(userMonoList).flatMap { it }.collectList()
     }
 
-    private fun createComments(users: List<UserDto>): Mono<List<CommentDto>> {
-        val commentMonoList = mutableListOf<Mono<CommentDto>>()
-        for (i in 0..5) {
-            val user = users.random()
-            commentMonoList.add(commentService.create(ObjectId(user.id), commentTexts.random()))
-        }
-        return Flux.fromIterable(commentMonoList).flatMap { it }.collectList()
-    }
-
-    private fun createToilets(
-        comments: List<CommentDto>
-    ): Mono<List<ToiletDto>> {
+    private fun createToilets(): Mono<List<ToiletDto>> {
         val toiletMonoList = mutableListOf<Mono<ToiletDto>>()
         for (num in 0 until numToilets) {
-            toiletMonoList.add(createToilet(comments))
+            toiletMonoList.add(createToilet())
         }
         return Flux.fromIterable(toiletMonoList).flatMap { it }.collectList()
     }
 
-    private fun createToilet(
-        comments: List<CommentDto>
-    ): Mono<ToiletDto> {
+    private fun createToilet(): Mono<ToiletDto> {
         val imgName = "toilet" + Random.nextInt(1, 10) + ".jpg"
         val title = titles.random()
         val description = descriptions.random()
-        val rating = Random.nextDouble(1.0, 6.0)
         val log = Random.nextDouble(10.0, 20.0)
         val lat = Random.nextDouble(45.0, 55.0)
 
         val inStreamCallable = Callable {
             DataLoaderRunner::class.java.getResourceAsStream("/sample-images/$imgName")
         }
-        val objId = imgService.store(inStreamCallable, "my-name")
-        return objId.flatMap { oid ->
-            println("imgOid = $oid")
-            val toilet = Toilet(
-                ObjectId(),
-                title,
-                GeoJsonPoint(log, lat),
-                oid,
-                rating,
-                disabled = false,
-                toiletCrewApproved = false,
-                description = description,
-                commentRefs = comments.subList(Random.nextInt(4), comments.size).map { ObjectId(it.id) }
-                    .toMutableList(),
-                imageRefs = mutableListOf()
+
+        return toiletService
+            .create(
+                CreateUpdateToiletDto(
+                    id = "",
+                    title = title,
+                    location = GeoJsonPoint(log, lat),
+                    disabled = false,
+                    toiletCrewApproved = false,
+                    description = description
+                )
             )
-            toiletService.create(toilet)
+            .zipWith(imgService.store(inStreamCallable, "my-name"))
+            .flatMap {
+                val imageId = it.t2
+                val toiletDto = it.t1
+                toiletService.linkImage(imageId.toHexString(), toiletDto.id)
+            }
+    }
+
+    private fun createComments(toilets: List<ToiletDto>, users: List<UserDto>): Mono<List<Toilet>> {
+        val toiletMonoList = mutableListOf<Mono<Toilet>>()
+        for (num in 0 until 100) {
+            toiletMonoList.add(
+                toiletService.addComment(
+                    ObjectId(users.random().id),
+                    CreateUpdateCommentDto(
+                        toiletId = toilets.random().id,
+                        text = commentTexts.random()
+                    )
+                )
+            )
         }
+        return Flux.fromIterable(toiletMonoList).flatMap { it }.collectList()
+    }
+
+    private fun createRatings(toilets: List<ToiletDto>, users: List<UserDto>): Mono<List<Toilet>> {
+        val toiletMonoList = mutableListOf<Mono<Toilet>>()
+        for (num in 0 until 30) {
+            toiletMonoList.add(
+                toiletService.addRating(
+                    ObjectId(users.random().id),
+                    CreateUpdateRatingDto(
+                        toiletId = toilets.random().id,
+                        value = Random.nextInt(0, 6).toDouble()
+                    )
+                )
+            )
+        }
+        return Flux.fromIterable(toiletMonoList).flatMap { it }.collectList()
     }
 }
 
