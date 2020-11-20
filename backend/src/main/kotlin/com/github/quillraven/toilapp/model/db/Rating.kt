@@ -9,5 +9,5 @@ data class Rating(
     @Id
     val id: ObjectId = ObjectId(),
     val userRef: ObjectId = ObjectId(),
-    val value: Double = 1.0
+    val value: Int = 0
 )

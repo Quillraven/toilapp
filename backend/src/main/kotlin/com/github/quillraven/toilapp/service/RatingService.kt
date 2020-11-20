@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service
 import reactor.core.publisher.Mono
 
 interface RatingService {
-    fun create(userId: ObjectId, value: Double): Mono<RatingDto>
+    fun create(userId: ObjectId, value: Int): Mono<RatingDto>
     fun update(createUpdateRatingDto: CreateUpdateRatingDto): Mono<RatingDto>
     fun getById(id: String): Mono<Rating>
     fun delete(id: String): Mono<Void>
@@ -36,7 +36,7 @@ class DefaultRatingService(
         rating.value
     )
 
-    override fun create(userId: ObjectId, value: Double): Mono<RatingDto> {
+    override fun create(userId: ObjectId, value: Int): Mono<RatingDto> {
         LOG.debug("create: (userId=$userId, value=$value)")
         return ratingRepository
             .save(Rating(userRef = userId, value = value))
