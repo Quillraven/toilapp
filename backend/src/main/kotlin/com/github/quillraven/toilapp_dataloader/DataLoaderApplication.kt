@@ -25,6 +25,7 @@ import org.springframework.data.mongodb.repository.config.EnableReactiveMongoRep
 import org.springframework.stereotype.Component
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
+import reactor.util.function.Tuples
 import java.util.concurrent.Callable
 import kotlin.random.Random
 import kotlin.system.exitProcess
@@ -92,119 +93,125 @@ class DataLoaderRunner(
     private val numToilets = 25
     private val numRatings = 50
 
-    override fun run(vararg args: String?) {
-        /**
-         * First create users because they are needed for comments and ratings
-         */
-        val users = Flux.range(0, userNames.size + 1)
-            .flatMap {
-                if (it < userNames.size) {
-                    LOG.debug("Creating user $it")
-                    userRepository.save(
-                        User(
-                            id = ObjectId(),
-                            name = userNames[it],
-                            email = "${userNames[it]}@mail.com"
-                        )
-                    )
-                } else {
-                    LOG.debug("Creating dev-user")
-                    userRepository.save(
-                        User(
-                            id = ObjectId("000000000000012343456789"),
-                            name = "devuser",
-                            email = "devuser@mail.com"
-                        )
-                    )
-                }
-            }
-            .collectList()
-            .block()!!
-
-        /**
-         * Create comments for toilets
-         */
-        val comments = Flux.range(0, numComments)
-            .flatMap {
-                LOG.debug("Creating comment $it")
-                commentRepository.save(
-                    Comment(
+    private fun createUsers() = Flux.range(0, userNames.size + 1)
+        .flatMap {
+            if (it < userNames.size) {
+                LOG.debug("Creating user $it")
+                userRepository.save(
+                    User(
                         id = ObjectId(),
-                        text = commentTexts.random(),
-                        userRef = users.random().id
+                        name = userNames[it],
+                        email = "${userNames[it]}@mail.com"
+                    )
+                )
+            } else {
+                LOG.debug("Creating dev-user")
+                userRepository.save(
+                    User(
+                        id = ObjectId("000000000000012343456789"),
+                        name = "devuser",
+                        email = "devuser@mail.com"
                     )
                 )
             }
-            .collectList()
-            .block()!!
+        }
+        .collectList()
 
-        /**
-         * Create ratings for toilets
-         */
-        val ratings = Flux.range(0, numRatings)
-            .flatMap {
-                LOG.debug("Creating rating $it")
-                ratingRepository.save(
-                    Rating(
-                        id = ObjectId(),
-                        userRef = users.random().id,
-                        value = Random.nextInt(0, 5)
-                    )
-                )
-            }
-            .collectList()
-            .block()!!
-
-        /**
-         * Create toilets
-         */
-        Flux.range(0, numToilets)
-            .flatMap {
-                val toilet = Toilet(
+    private fun createComments(users: List<User>) = Flux.range(0, numComments)
+        .flatMap {
+            LOG.debug("Creating comment $it")
+            commentRepository.save(
+                Comment(
                     id = ObjectId(),
-                    title = titles.random(),
-                    location = GeoJsonPoint(Random.nextDouble(10.0, 20.0), Random.nextDouble(45.0, 55.0)),
-                    description = descriptions.random()
+                    text = commentTexts.random(),
+                    userRef = users.random().id
                 )
+            )
+        }
+        .collectList()
 
-                // add comments
-                val commentsToAdd = Random.nextInt(0, comments.size)
-                for (i in 0 until commentsToAdd) {
-                    toilet.commentRefs.add(comments[i].id)
-                }
+    private fun createRatings(users: List<User>) = Flux.range(0, numRatings)
+        .flatMap {
+            LOG.debug("Creating rating $it")
+            ratingRepository.save(
+                Rating(
+                    id = ObjectId(),
+                    userRef = users.random().id,
+                    value = Random.nextInt(0, 5)
+                )
+            )
+        }
+        .collectList()
 
-                // add average rating and rating references
-                val ratingsToAdd = Random.nextInt(0, ratings.size)
-                for (i in 0 until ratingsToAdd) {
-                    toilet.ratingRefs.add(ratings[i].id)
-                    toilet.averageRating += ratings[i].value
-                }
-                if (toilet.ratingRefs.isNotEmpty()) {
-                    toilet.averageRating /= toilet.ratingRefs.size
-                }
+    private fun createToilets(comments: List<Comment>, ratings: List<Rating>) = Flux.range(0, numToilets)
+        .flatMap {
+            val toilet = Toilet(
+                id = ObjectId(),
+                title = titles.random(),
+                location = GeoJsonPoint(Random.nextDouble(10.0, 20.0), Random.nextDouble(45.0, 55.0)),
+                description = descriptions.random()
+            )
 
-                LOG.debug("Creating toilet $it with $commentsToAdd comments and $ratingsToAdd ratings")
-
-                toiletRepository.save(toilet)
+            // add comments
+            val commentsToAdd = Random.nextInt(0, comments.size)
+            for (i in 0 until commentsToAdd) {
+                toilet.commentRefs.add(comments[i].id)
             }
-            // upload preview image
-            .flatMap { toilet ->
-                val imageName = "toilet${Random.nextInt(1, 10)}.jpg"
-                imageService.store(
-                    Callable {
-                        DataLoaderRunner::class.java.getResourceAsStream("/sample-images/$imageName")
-                    },
-                    "${toilet.title}-preview"
-                ).zipWith(Mono.just(toilet))
+
+            // add average rating and rating references
+            val ratingsToAdd = Random.nextInt(0, ratings.size)
+            for (i in 0 until ratingsToAdd) {
+                toilet.ratingRefs.add(ratings[i].id)
+                toilet.averageRating += ratings[i].value
             }
-            // set preview image
+            if (toilet.ratingRefs.isNotEmpty()) {
+                toilet.averageRating /= toilet.ratingRefs.size
+            }
+
+            LOG.debug("Creating toilet $it with $commentsToAdd comments and $ratingsToAdd ratings")
+
+            toiletRepository.save(toilet)
+        }
+        // upload preview image
+        .flatMap { toilet ->
+            val imageName = "toilet${Random.nextInt(1, 10)}.jpg"
+            imageService.store(
+                Callable {
+                    DataLoaderRunner::class.java.getResourceAsStream("/sample-images/$imageName")
+                },
+                "${toilet.title}-preview"
+            ).zipWith(Mono.just(toilet))
+        }
+        // set preview image
+        .flatMap {
+            val imageId = it.t1
+            val toilet = it.t2
+
+            toiletRepository.save(toilet.copy(previewID = imageId))
+        }
+        .collectList()
+
+    override fun run(vararg args: String?) {
+        createUsers()
+            .flatMap { users ->
+                createComments(users).map { comments ->
+                    Tuples.of(users, comments)
+                }
+            }
             .flatMap {
-                val imageId = it.t1
-                val toilet = it.t2
+                val users = it.t1
+                val comments = it.t2
 
-                toiletRepository.save(toilet.copy(previewID = imageId))
+                createRatings(users).map { ratings ->
+                    Tuples.of(comments, ratings)
+                }
             }
-            .collectList()
+            .flatMap {
+                val comments = it.t1
+                val ratings = it.t2
+
+                createToilets(comments, ratings)
+            }
             // close application when all toilets are processed
             .subscribe {
                 GlobalScope.launch {
