@@ -4,6 +4,7 @@ import com.github.quillraven.toilapp.model.db.TOILETS_COLLECTION_NAME
 import com.github.quillraven.toilapp.model.db.Toilet
 import com.github.quillraven.toilapp.model.db.ToiletCommentInfo
 import com.github.quillraven.toilapp.model.db.ToiletRatingInfo
+import com.github.quillraven.toilapp.model.db.ToiletRatings
 import org.bson.types.ObjectId
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.geo.Distance
@@ -24,6 +25,8 @@ import reactor.core.publisher.Mono
 interface ToiletRepository : ReactiveMongoRepository<Toilet, ObjectId>, CustomToiletRepository {
     @Suppress("SpringDataRepositoryMethodReturnTypeInspection", "SpringDataRepositoryMethodParametersInspection")
     fun findByLocationNear(location: Point, distance: Distance): Flux<GeoResult<Toilet>>
+
+    fun findByPreviewID(id: ObjectId): Flux<Toilet>
 }
 
 interface CustomToiletRepository {
@@ -35,7 +38,9 @@ interface CustomToiletRepository {
     fun updateRating(toiletId: ObjectId, oldValue: Int, newValue: Int): Mono<Toilet>
     fun removeRating(toiletId: ObjectId, ratingId: ObjectId, ratingValue: Int): Mono<Toilet>
     fun getRatingInfo(toiletId: ObjectId): Mono<ToiletRatingInfo>
+    fun getRatings(toiletId: ObjectId): Flux<ToiletRatings>
     fun findByRatingRefsContains(ratingId: ObjectId): Flux<Toilet>
+    fun removePreviewID(toiletId: ObjectId): Mono<Toilet>
 }
 
 class CustomToiletRepositoryImpl(
@@ -44,7 +49,7 @@ class CustomToiletRepositoryImpl(
     override fun addComment(toiletId: ObjectId, commentId: ObjectId): Mono<Toilet> {
         val query = Query(Criteria(ID_FIELD_NAME).`is`(toiletId))
 
-        val update = Update().addToSet(COMMENTS_FIELD_NAME, commentId)
+        val update = Update().addToSet(ToiletCommentInfo::commentRefs.name, commentId)
 
         return mongoTemplate.findAndModify(query, update, Toilet::class.java)
     }
@@ -52,7 +57,7 @@ class CustomToiletRepositoryImpl(
     override fun removeComment(toiletId: ObjectId, commentId: ObjectId): Mono<Toilet> {
         val query = Query(Criteria(ID_FIELD_NAME).`is`(toiletId))
 
-        val update = Update().pull(COMMENTS_FIELD_NAME, commentId)
+        val update = Update().pull(ToiletCommentInfo::commentRefs.name, commentId)
 
         return mongoTemplate.findAndModify(query, update, Toilet::class.java)
     }
@@ -60,7 +65,7 @@ class CustomToiletRepositoryImpl(
     override fun getCommentInfo(toiletId: ObjectId): Flux<ToiletCommentInfo> {
         val query = Query(
             Criteria(ID_FIELD_NAME).`is`(toiletId)
-                .andOperator(Criteria(COMMENTS_FIELD_NAME).exists(true))
+                .andOperator(Criteria(ToiletCommentInfo::commentRefs.name).exists(true))
         )
 
         return mongoTemplate
@@ -68,9 +73,7 @@ class CustomToiletRepositoryImpl(
     }
 
     override fun findByCommentRefsContains(commentId: ObjectId): Flux<Toilet> {
-        val query = Query(
-            Criteria(COMMENTS_FIELD_NAME).`is`(commentId)
-        )
+        val query = Query(Criteria(ToiletCommentInfo::commentRefs.name).`is`(commentId))
 
         return mongoTemplate.find(query, Toilet::class.java, TOILETS_COLLECTION_NAME)
     }
@@ -79,7 +82,7 @@ class CustomToiletRepositoryImpl(
         val query = Query(Criteria(ID_FIELD_NAME).`is`(toiletId))
 
         val update = Update()
-            .addToSet(RATINGS_FIELD_NAME, ratingId)
+            .addToSet(ToiletRatings::ratingRefs.name, ratingId)
             .inc(Toilet::totalRating.name, ratingValue)
 
         return mongoTemplate.findAndModify(query, update, Toilet::class.java)
@@ -98,7 +101,7 @@ class CustomToiletRepositoryImpl(
         val query = Query(Criteria(ID_FIELD_NAME).`is`(toiletId))
 
         val update = Update()
-            .pull(RATINGS_FIELD_NAME, ratingId)
+            .pull(ToiletRatings::ratingRefs.name, ratingId)
             .inc(Toilet::totalRating.name, -ratingValue)
 
         return mongoTemplate.findAndModify(query, update, Toilet::class.java)
@@ -108,11 +111,11 @@ class CustomToiletRepositoryImpl(
         val aggregation = Aggregation.newAggregation(
             Aggregation.match(
                 Criteria(ID_FIELD_NAME).`is`(toiletId)
-                    .andOperator(Criteria(RATINGS_FIELD_NAME).exists(true))
+                    .andOperator(Criteria(ToiletRatings::ratingRefs.name).exists(true))
             ),
             Aggregation.project()
                 .andInclude(Toilet::totalRating.name)
-                .and(RATINGS_FIELD_NAME).size().`as`(ToiletRatingInfo::numRatings.name)
+                .and(ToiletRatings::ratingRefs.name).size().`as`(ToiletRatingInfo::numRatings.name)
         )
 
         return mongoTemplate
@@ -120,18 +123,32 @@ class CustomToiletRepositoryImpl(
             .single(ToiletRatingInfo())
     }
 
-    override fun findByRatingRefsContains(ratingId: ObjectId): Flux<Toilet> {
+    override fun getRatings(toiletId: ObjectId): Flux<ToiletRatings> {
         val query = Query(
-            Criteria(RATINGS_FIELD_NAME).`is`(ratingId)
+            Criteria(ID_FIELD_NAME).`is`(toiletId)
+                .andOperator(Criteria(ToiletRatings::ratingRefs.name).exists(true))
         )
+
+        return mongoTemplate
+            .find(query, ToiletRatings::class.java, TOILETS_COLLECTION_NAME)
+    }
+
+    override fun findByRatingRefsContains(ratingId: ObjectId): Flux<Toilet> {
+        val query = Query(Criteria(ToiletRatings::ratingRefs.name).`is`(ratingId))
 
         return mongoTemplate.find(query, Toilet::class.java, TOILETS_COLLECTION_NAME)
     }
 
+    override fun removePreviewID(toiletId: ObjectId): Mono<Toilet> {
+        val query = Query(Criteria(ID_FIELD_NAME).`is`(toiletId))
+
+        val update = Update().set(Toilet::previewID.name, null)
+
+        return mongoTemplate.findAndModify(query, update, Toilet::class.java)
+    }
+
     companion object {
         private const val ID_FIELD_NAME = "_id"
-        private const val COMMENTS_FIELD_NAME = "commentRefs"
-        private const val RATINGS_FIELD_NAME = "ratingRefs"
     }
 }
 

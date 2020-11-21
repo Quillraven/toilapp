@@ -22,6 +22,7 @@ interface CommentService {
     fun getById(id: String): Mono<Comment>
     fun update(createUpdateCommentDto: CreateUpdateCommentDto): Mono<CommentDto>
     fun delete(id: String): Mono<Void>
+    fun deleteOnlyComment(commentId: ObjectId): Mono<Void>
 }
 
 @Service
@@ -89,10 +90,10 @@ class DefaultCommentService(
             }
             .collectList()
             // remove comment itself
-            .then(deleteComment(commentId))
+            .then(deleteOnlyComment(commentId))
     }
 
-    private fun deleteComment(commentId: ObjectId): Mono<Void> {
+    override fun deleteOnlyComment(commentId: ObjectId): Mono<Void> {
         LOG.debug("Deleting comment '$commentId'")
         return commentRepository.deleteById(commentId)
     }

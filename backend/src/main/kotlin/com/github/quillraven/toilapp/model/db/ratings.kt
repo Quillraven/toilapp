@@ -24,3 +24,9 @@ data class ToiletRatingInfo(
             else -> totalRating.toDouble() / numRatings
         }
 }
+
+data class ToiletRatings(
+    @Id
+    val id: ObjectId = ObjectId(),
+    val ratingRefs: List<ObjectId> = listOf()
+)

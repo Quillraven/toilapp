@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.http.codec.multipart.FilePart
 import org.springframework.transaction.annotation.Transactional
+import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
@@ -39,4 +40,7 @@ class PreviewImageController(
     )
     @ResponseBody
     fun getPreviewImage(@PathVariable id: String) = imageService.get(id)
+
+    @DeleteMapping("/previews/{id}")
+    fun deletePreviewImage(@PathVariable id: String) = imageService.delete(id)
 }

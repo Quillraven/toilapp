@@ -245,24 +245,56 @@ class DefaultToiletService(
             }
     }
 
+    @Transactional
     override fun delete(id: String): Mono<Void> {
         LOG.debug("delete: (id=$id)")
-        return toiletRepository
-            .findById(ObjectId(id))
-//            .flatMap { toilet ->
-//                Flux.merge(
-//                    // delete comments
-//                    Flux.fromIterable(toilet.commentRefs)
-//                        .flatMap { commentService.delete(it.toHexString()) },
-//                    // delete ratings
-//                    Flux.fromIterable(toilet.ratingRefs)
-//                        .flatMap { ratingService.delete(it.toHexString()) }
-//                )
-//            }
-            .then(
-                // finally -> delete toilet
-                toiletRepository.deleteById(ObjectId(id))
+        val toiletId = ObjectId(id)
+
+        return Flux
+            .merge(
+                deleteComments(toiletId),
+                deleteRatings(toiletId),
+                deletePreviewImage(toiletId)
             )
+            .then(
+                deleteToilet(toiletId)
+            )
+    }
+
+    private fun deleteComments(toiletId: ObjectId): Flux<Void> {
+        return toiletRepository.getCommentInfo(toiletId)
+            .flatMap {
+                Flux.fromIterable(it.commentRefs)
+            }
+            .flatMap {
+                commentService.deleteOnlyComment(it)
+            }
+    }
+
+    private fun deleteRatings(toiletId: ObjectId): Flux<Void> {
+        return toiletRepository.getRatings(toiletId)
+            .flatMap {
+                Flux.fromIterable(it.ratingRefs)
+            }
+            .flatMap {
+                ratingService.deleteOnlyRating(it)
+            }
+    }
+
+    private fun deletePreviewImage(toiletId: ObjectId): Mono<Void> {
+        return toiletRepository.findById(toiletId)
+            .flatMap {
+                if (it.previewID != null) {
+                    imageService.deleteOnlyImage(it.previewID)
+                } else {
+                    Mono.empty<Void>()
+                }
+            }
+    }
+
+    private fun deleteToilet(toiletId: ObjectId): Mono<Void> {
+        LOG.debug("Deleting toilet '$toiletId'")
+        return toiletRepository.deleteById(toiletId)
     }
 
     override fun createAndLinkImage(file: Mono<FilePart>, toiletId: String): Mono<ToiletDto> {

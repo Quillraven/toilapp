@@ -22,6 +22,7 @@ interface RatingService {
     fun getById(id: String): Mono<Rating>
     fun update(createUpdateRatingDto: CreateUpdateRatingDto): Mono<Rating>
     fun delete(id: String): Mono<Void>
+    fun deleteOnlyRating(ratingId: ObjectId): Mono<Void>
 }
 
 @Service
@@ -88,10 +89,10 @@ class DefaultRatingService(
                 toiletRepository.removeRating(toilet.id, rating.id, rating.value)
             }
             // remove rating itself
-            .then(deleteRating(ratingId))
+            .then(deleteOnlyRating(ratingId))
     }
 
-    private fun deleteRating(ratingId: ObjectId): Mono<Void> {
+    override fun deleteOnlyRating(ratingId: ObjectId): Mono<Void> {
         LOG.debug("Deleting rating '$ratingId'")
         return ratingRepository.deleteById(ratingId)
     }

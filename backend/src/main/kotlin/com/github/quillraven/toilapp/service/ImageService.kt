@@ -11,4 +11,5 @@ interface ImageService {
     fun get(id: String): Mono<ByteArray>
     fun store(inStreamCallable: Callable<InputStream>, name: String): Mono<ObjectId>
     fun delete(id: String): Mono<Void>
+    fun deleteOnlyImage(imageId: ObjectId): Mono<Void>
 }
