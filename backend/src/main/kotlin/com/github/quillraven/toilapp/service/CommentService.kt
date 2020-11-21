@@ -89,10 +89,12 @@ class DefaultCommentService(
             }
             .collectList()
             // remove comment itself
-            .flatMap {
-                LOG.debug("Deleting comment '$id'")
-                commentRepository.deleteById(commentId)
-            }
+            .then(deleteComment(commentId))
+    }
+
+    private fun deleteComment(commentId: ObjectId): Mono<Void> {
+        LOG.debug("Deleting comment '$commentId'")
+        return commentRepository.deleteById(commentId)
     }
 
     companion object {

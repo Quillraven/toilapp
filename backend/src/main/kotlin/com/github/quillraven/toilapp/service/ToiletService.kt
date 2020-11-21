@@ -4,7 +4,9 @@ import com.github.quillraven.toilapp.ToiletDoesNotExistException
 import com.github.quillraven.toilapp.model.db.Toilet
 import com.github.quillraven.toilapp.model.dto.CommentDto
 import com.github.quillraven.toilapp.model.dto.CreateUpdateCommentDto
+import com.github.quillraven.toilapp.model.dto.CreateUpdateRatingDto
 import com.github.quillraven.toilapp.model.dto.CreateUpdateToiletDto
+import com.github.quillraven.toilapp.model.dto.RatingDto
 import com.github.quillraven.toilapp.model.dto.ToiletDto
 import com.github.quillraven.toilapp.repository.ToiletRepository
 import org.bson.types.ObjectId
@@ -28,6 +30,8 @@ interface ToiletService {
     fun getNearbyToilets(lon: Double, lat: Double, maxDistanceInMeters: Double): Flux<ToiletDto>
     fun createComment(createUpdateCommentDto: CreateUpdateCommentDto): Mono<CommentDto>
     fun getComments(toiletId: String): Flux<CommentDto>
+    fun createRating(createUpdateRatingDto: CreateUpdateRatingDto): Mono<RatingDto>
+    fun updateRating(createUpdateRatingDto: CreateUpdateRatingDto): Mono<RatingDto>
     fun createAndLinkImage(file: Mono<FilePart>, toiletId: String): Mono<ToiletDto>
     fun linkImage(imageId: String, toiletId: String): Mono<ToiletDto>
     fun delete(id: String): Mono<Void>
@@ -38,6 +42,7 @@ class DefaultToiletService(
     @Autowired private val toiletRepository: ToiletRepository,
     @Autowired private val imageService: ImageService,
     @Autowired private val commentService: CommentService,
+    @Autowired private val ratingService: RatingService,
     @Autowired private val userService: UserService
 ) : ToiletService {
     /**
@@ -183,6 +188,61 @@ class DefaultToiletService(
                 val user = it.t2
                 LOG.debug("Creating CommentDto for comment $comment and user $user")
                 commentService.createCommentDto(comment, user)
+            }
+    }
+
+    @Transactional
+    override fun createRating(createUpdateRatingDto: CreateUpdateRatingDto): Mono<RatingDto> {
+        val userId = userService.getCurrentUserId()
+        LOG.debug("createRating: (userId=$userId, $createUpdateRatingDto)")
+
+        return getById(createUpdateRatingDto.toiletId)
+            .flatMap { toilet ->
+                ratingService.create(userId, createUpdateRatingDto.value).map {
+                    Tuples.of(toilet, it)
+                }
+            }
+            .flatMap {
+                val toilet = it.t1
+                val rating = it.t2
+
+                LOG.debug("Created rating $rating")
+
+                toiletRepository.addRating(toilet.id, rating.id, rating.value).map {
+                    rating
+                }
+            }
+            .flatMap { rating ->
+                userService.getById(userId).map { Tuples.of(rating, it) }
+            }
+            .map {
+                ratingService.createRatingDto(it.t1, it.t2)
+            }
+    }
+
+    @Transactional
+    override fun updateRating(createUpdateRatingDto: CreateUpdateRatingDto): Mono<RatingDto> {
+        LOG.debug("updateRating: $createUpdateRatingDto")
+
+        return ratingService.getById(createUpdateRatingDto.ratingId)
+            .flatMap { rating ->
+                ratingService.update(createUpdateRatingDto).map {
+                    Tuples.of(rating.value, it)
+                }
+            }
+            .flatMap {
+                val rating = it.t2
+                val oldValue = it.t1
+                val newValue = rating.value
+
+                LOG.debug("Update rating for toilet '${createUpdateRatingDto.toiletId}' from $oldValue to $newValue")
+
+                toiletRepository.updateRating(ObjectId(createUpdateRatingDto.toiletId), oldValue, newValue).map {
+                    rating
+                }
+            }
+            .map {
+                ratingService.createRatingDto(it)
             }
     }
 
