@@ -7,34 +7,18 @@ import org.springframework.data.mongodb.core.index.GeoSpatialIndexType
 import org.springframework.data.mongodb.core.index.GeoSpatialIndexed
 import org.springframework.data.mongodb.core.mapping.Document
 
-@Document(collection = "toilets")
+const val TOILETS_COLLECTION_NAME = "toilets"
+
+@Document(collection = TOILETS_COLLECTION_NAME)
 data class Toilet(
     @Id
     val id: ObjectId = ObjectId(),
     val title: String = "",
+    val description: String = "",
     @GeoSpatialIndexed(name = "location", type = GeoSpatialIndexType.GEO_2DSPHERE)
     val location: GeoJsonPoint = GeoJsonPoint(0.0, 0.0),
     val previewID: ObjectId? = null,
-    var averageRating: Double = 0.0,
-    val ratingRefs: MutableList<ObjectId> = mutableListOf(),
+    val totalRating: Int = 0,
     val disabled: Boolean = false,
-    val toiletCrewApproved: Boolean = false,
-    val description: String = "",
-    val commentRefs: MutableList<ObjectId> = mutableListOf(),
-    val imageRefs: MutableList<ObjectId> = mutableListOf()
-) {
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-
-        other as Toilet
-
-        if (id != other.id) return false
-
-        return true
-    }
-
-    override fun hashCode(): Int {
-        return id.hashCode()
-    }
-}
+    val toiletCrewApproved: Boolean = false
+)

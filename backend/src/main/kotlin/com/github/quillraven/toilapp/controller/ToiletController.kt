@@ -55,7 +55,4 @@ class ToiletController(
 
     @DeleteMapping("/toilets/{id}")
     fun deleteToilet(@PathVariable id: String) = toiletService.delete(id)
-
-    @GetMapping("/comments/{toiletId}")
-    fun getComments(@PathVariable toiletId: String) = toiletService.getComments(toiletId)
 }

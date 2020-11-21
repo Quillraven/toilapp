@@ -13,3 +13,9 @@ data class Comment(
     val date: Date = Date(),
     val text: String = ""
 )
+
+data class ToiletCommentInfo(
+    @Id
+    val id: ObjectId = ObjectId(),
+    val commentRefs: List<ObjectId> = listOf()
+)

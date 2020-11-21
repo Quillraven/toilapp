@@ -7,24 +7,27 @@ import com.github.quillraven.toilapp.model.dto.CommentDto
 import com.github.quillraven.toilapp.model.dto.CreateUpdateCommentDto
 import com.github.quillraven.toilapp.model.dto.UserDto
 import com.github.quillraven.toilapp.repository.CommentRepository
+import com.github.quillraven.toilapp.repository.ToiletRepository
 import org.bson.types.ObjectId
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import reactor.core.publisher.Mono
 import java.util.*
 
 interface CommentService {
     fun createCommentDto(comment: Comment, user: User? = null): CommentDto
-    fun create(userId: ObjectId, text: String): Mono<CommentDto>
-    fun update(createUpdateCommentDto: CreateUpdateCommentDto): Mono<CommentDto>
+    fun create(userId: ObjectId, text: String): Mono<Comment>
     fun getById(id: String): Mono<Comment>
+    fun update(createUpdateCommentDto: CreateUpdateCommentDto): Mono<CommentDto>
     fun delete(id: String): Mono<Void>
 }
 
 @Service
 class DefaultCommentService(
-    @Autowired private val commentRepository: CommentRepository
+    @Autowired private val commentRepository: CommentRepository,
+    @Autowired private val toiletRepository: ToiletRepository
 ) : CommentService {
 
     /**
@@ -34,16 +37,28 @@ class DefaultCommentService(
      */
     override fun createCommentDto(comment: Comment, user: User?) = CommentDto(
         comment.id.toHexString(),
-        UserDto(comment.userRef.toHexString(), user?.name ?: "", ""),
+        UserDto(comment.userRef.toHexString(), user?.name ?: "", user?.email ?: ""),
         comment.date,
         comment.text
     )
 
-    override fun create(userId: ObjectId, text: String): Mono<CommentDto> {
+    @Transactional
+    override fun create(userId: ObjectId, text: String): Mono<Comment> {
         LOG.debug("create: (userId=$userId, text=$text)")
+
+        return commentRepository.save(
+            Comment(
+                userRef = userId,
+                text = text
+            )
+        )
+    }
+
+    override fun getById(id: String): Mono<Comment> {
+        LOG.debug("getById: (id=$id)")
         return commentRepository
-            .save(Comment(userRef = userId, text = text))
-            .map { createCommentDto(it) }
+            .findById(ObjectId(id))
+            .switchIfEmpty(Mono.error(CommentDoesNotExistException(id)))
     }
 
     override fun update(createUpdateCommentDto: CreateUpdateCommentDto): Mono<CommentDto> {
@@ -61,17 +76,23 @@ class DefaultCommentService(
             .map { createCommentDto(it) }
     }
 
-    override fun getById(id: String): Mono<Comment> {
-        LOG.debug("getById: (id=$id)")
-        return commentRepository
-            .findById(ObjectId(id))
-            .switchIfEmpty(Mono.error(CommentDoesNotExistException(id)))
-    }
-
+    @Transactional
     override fun delete(id: String): Mono<Void> {
         LOG.debug("delete: (id=$id)")
-        return commentRepository.findById(ObjectId(id))
-            .flatMap { commentRepository.deleteById(ObjectId(id)) }
+        val commentId = ObjectId(id)
+
+        return toiletRepository.findByCommentRefsContains(commentId)
+            // remove comment from any toilets
+            .flatMap {
+                LOG.debug("Deleting comment from toilet $it")
+                toiletRepository.removeComment(it.id, commentId)
+            }
+            .collectList()
+            // remove comment itself
+            .flatMap {
+                LOG.debug("Deleting comment '$id'")
+                commentRepository.deleteById(commentId)
+            }
     }
 
     companion object {
