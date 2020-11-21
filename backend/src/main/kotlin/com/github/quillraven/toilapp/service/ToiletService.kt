@@ -33,7 +33,6 @@ interface ToiletService {
     fun createRating(createUpdateRatingDto: CreateUpdateRatingDto): Mono<RatingDto>
     fun updateRating(createUpdateRatingDto: CreateUpdateRatingDto): Mono<RatingDto>
     fun createAndLinkImage(file: Mono<FilePart>, toiletId: String): Mono<ToiletDto>
-    fun linkImage(imageId: String, toiletId: String): Mono<ToiletDto>
     fun delete(id: String): Mono<Void>
 }
 
@@ -275,13 +274,6 @@ class DefaultToiletService(
                 val fileId = it.t2
                 toiletRepository.save(toilet.copy(previewID = ObjectId(fileId)))
             }
-            .map { createToiletDto(it) }
-    }
-
-    override fun linkImage(imageId: String, toiletId: String): Mono<ToiletDto> {
-        LOG.debug("linkImage: (imageId=$imageId, toiletId=$toiletId)")
-        return getById(toiletId)
-            .flatMap { toiletRepository.save(it.copy(previewID = ObjectId(imageId))) }
             .map { createToiletDto(it) }
     }
 
