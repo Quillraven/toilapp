@@ -137,40 +137,24 @@ class DataLoaderRunner(
                 Rating(
                     id = ObjectId(),
                     userRef = users.random().id,
-                    value = Random.nextInt(0, 5)
+                    value = Random.nextInt(1, 6)
                 )
             )
         }
         .collectList()
 
-    private fun createToilets(comments: List<Comment>, ratings: List<Rating>) = Flux.range(0, numToilets)
+    private fun createToilets() = Flux.range(0, numToilets)
         .flatMap {
-            val toilet = Toilet(
-                id = ObjectId(),
-                title = titles.random(),
-                location = GeoJsonPoint(Random.nextDouble(10.0, 20.0), Random.nextDouble(45.0, 55.0)),
-                description = descriptions.random()
+            LOG.debug("Creating toilet $it")
+
+            toiletRepository.save(
+                Toilet(
+                    id = ObjectId(),
+                    title = titles.random(),
+                    location = GeoJsonPoint(Random.nextDouble(10.0, 20.0), Random.nextDouble(45.0, 55.0)),
+                    description = descriptions.random()
+                )
             )
-
-            // add comments
-            val commentsToAdd = Random.nextInt(0, comments.size)
-            for (i in 0 until commentsToAdd) {
-                toilet.commentRefs.add(comments[i].id)
-            }
-
-            // add average rating and rating references
-            val ratingsToAdd = Random.nextInt(0, ratings.size)
-            for (i in 0 until ratingsToAdd) {
-                toilet.ratingRefs.add(ratings[i].id)
-                toilet.averageRating += ratings[i].value
-            }
-            if (toilet.ratingRefs.isNotEmpty()) {
-                toilet.averageRating /= toilet.ratingRefs.size
-            }
-
-            LOG.debug("Creating toilet $it with $commentsToAdd comments and $ratingsToAdd ratings")
-
-            toiletRepository.save(toilet)
         }
         // upload preview image
         .flatMap { toilet ->
@@ -188,6 +172,24 @@ class DataLoaderRunner(
             val toilet = it.t2
 
             toiletRepository.save(toilet.copy(previewID = imageId))
+        }
+        .collectList()
+
+    private fun addComments(comments: List<Comment>, toilets: List<Toilet>) = Flux.range(0, comments.size)
+        .flatMap {
+            val commentId = comments[it].id
+            val toiletId = toilets.random().id
+            LOG.debug("Adding comment '$commentId' to toilet '$toiletId'")
+            toiletRepository.addComment(toiletId, commentId)
+        }
+        .collectList()
+
+    private fun addRatings(ratings: List<Rating>, toilets: List<Toilet>) = Flux.range(0, ratings.size)
+        .flatMap {
+            val ratingId = ratings[it].id
+            val toiletId = toilets.random().id
+            LOG.debug("Adding rating '$ratingId' to toilet '$toiletId'")
+            toiletRepository.addRating(toiletId, ratingId, ratings[it].value)
         }
         .collectList()
 
@@ -210,7 +212,23 @@ class DataLoaderRunner(
                 val comments = it.t1
                 val ratings = it.t2
 
-                createToilets(comments, ratings)
+                createToilets().map { toilets ->
+                    Tuples.of(toilets, comments, ratings)
+                }
+            }
+            // add comments and ratings to toilets
+            .flatMap {
+                val toilets = it.t1
+                val comments = it.t2
+                val ratings = it.t3
+                addComments(comments, toilets).map {
+                    Tuples.of(toilets, ratings)
+                }
+            }
+            .flatMap {
+                val toilets = it.t1
+                val ratings = it.t2
+                addRatings(ratings, toilets)
             }
             // close application when all toilets are processed
             .subscribe {
