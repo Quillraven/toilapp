@@ -40,11 +40,11 @@ class DefaultUserService(
         return when {
             ToilappSystemProperties.isDevMode() -> {
                 //return dev user created by DataLoaderApplication
-                ObjectId("5fc2600fa23d8d7fcaba9e94")
+                ObjectId("000000000000012343456789")
             }
             else -> {
                 //TODO return user from request
-                ObjectId("5fc2600fa23d8d7fcaba9e94")
+                ObjectId("000000000000012343456789")
             }
         }
     }

@@ -2,6 +2,7 @@ package com.github.quillraven.toilapp_dataloader
 
 import com.github.quillraven.toilapp.configuration.MongoConfiguration
 import com.github.quillraven.toilapp.model.db.Comment
+import com.github.quillraven.toilapp.model.db.ImageMetadata
 import com.github.quillraven.toilapp.model.db.Rating
 import com.github.quillraven.toilapp.model.db.Toilet
 import com.github.quillraven.toilapp.model.db.User
@@ -9,24 +10,26 @@ import com.github.quillraven.toilapp.repository.CommentRepository
 import com.github.quillraven.toilapp.repository.RatingRepository
 import com.github.quillraven.toilapp.repository.ToiletRepository
 import com.github.quillraven.toilapp.repository.UserRepository
-import com.github.quillraven.toilapp.service.GridFsImageService
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import org.bson.types.ObjectId
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.boot.CommandLineRunner
 import org.springframework.boot.SpringApplication
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
 import org.springframework.context.ConfigurableApplicationContext
+import org.springframework.core.io.buffer.DataBufferUtils
+import org.springframework.core.io.buffer.DefaultDataBufferFactory
 import org.springframework.data.mongodb.core.geo.GeoJsonPoint
+import org.springframework.data.mongodb.gridfs.ReactiveGridFsTemplate
 import org.springframework.data.mongodb.repository.config.EnableReactiveMongoRepositories
+import org.springframework.http.MediaType
 import org.springframework.stereotype.Component
 import reactor.core.publisher.Flux
-import reactor.core.publisher.Mono
 import reactor.util.function.Tuples
-import java.util.concurrent.Callable
 import kotlin.random.Random
 import kotlin.system.exitProcess
 
@@ -82,16 +85,17 @@ class DataLoaderApplication
 
 @Component
 class DataLoaderRunner(
-    @Autowired private val toiletRepository: ToiletRepository,
     @Autowired private val userRepository: UserRepository,
+    @Autowired private val toiletRepository: ToiletRepository,
+    @Qualifier("reactiveGridFsTemplateForImages")
+    @Autowired private val gridFsTemplate: ReactiveGridFsTemplate,
     @Autowired private val commentRepository: CommentRepository,
     @Autowired private val ratingRepository: RatingRepository,
-    @Autowired private val imageService: GridFsImageService,
     @Autowired private val context: ConfigurableApplicationContext
 ) : CommandLineRunner {
-    private val numComments = 20
-    private val numToilets = 25
-    private val numRatings = 50
+    private val numToilets = 20
+    private val numComments = numToilets * 10
+    private val numRatings = numToilets * 100
 
     private fun createUsers() = Flux.range(0, userNames.size + 1)
         .flatMap {
@@ -117,32 +121,6 @@ class DataLoaderRunner(
         }
         .collectList()
 
-    private fun createComments(users: List<User>) = Flux.range(0, numComments)
-        .flatMap {
-            LOG.debug("Creating comment $it")
-            commentRepository.save(
-                Comment(
-                    id = ObjectId(),
-                    text = commentTexts.random(),
-                    userRef = users.random().id
-                )
-            )
-        }
-        .collectList()
-
-    private fun createRatings(users: List<User>) = Flux.range(0, numRatings)
-        .flatMap {
-            LOG.debug("Creating rating $it")
-            ratingRepository.save(
-                Rating(
-                    id = ObjectId(),
-                    userRef = users.random().id,
-                    value = Random.nextInt(1, 6)
-                )
-            )
-        }
-        .collectList()
-
     private fun createToilets() = Flux.range(0, numToilets)
         .flatMap {
             LOG.debug("Creating toilet $it")
@@ -159,77 +137,66 @@ class DataLoaderRunner(
         // upload preview image
         .flatMap { toilet ->
             val imageName = "toilet${Random.nextInt(1, 10)}.jpg"
-            imageService.store(
-                Callable {
-                    DataLoaderRunner::class.java.getResourceAsStream("/sample-images/$imageName")
-                },
-                "${toilet.title}-preview"
-            ).zipWith(Mono.just(toilet))
-        }
-        // set preview image
-        .flatMap {
-            val imageId = it.t1
-            val toilet = it.t2
 
-            toiletRepository.save(toilet.copy(previewID = imageId))
+            gridFsTemplate.store(
+                DataBufferUtils.readInputStream(
+                    { DataLoaderRunner::class.java.getResourceAsStream("/sample-images/$imageName") },
+                    DefaultDataBufferFactory(),
+                    DefaultDataBufferFactory.DEFAULT_INITIAL_CAPACITY
+                ),
+                imageName,
+                MediaType.IMAGE_JPEG_VALUE,
+                ImageMetadata(
+                    toiletId = toilet.id,
+                    preview = true
+                )
+            ).map { toilet }
         }
         .collectList()
 
-    private fun addComments(comments: List<Comment>, toilets: List<Toilet>) = Flux.range(0, comments.size)
+    private fun createComments(users: List<User>, toilets: MutableList<Toilet>) = Flux.range(0, numComments)
         .flatMap {
-            val commentId = comments[it].id
-            val toiletId = toilets.random().id
-            LOG.debug("Adding comment '$commentId' to toilet '$toiletId'")
-            toiletRepository.addComment(toiletId, commentId)
+            LOG.debug("Creating comment $it")
+            commentRepository.save(
+                Comment(
+                    id = ObjectId(),
+                    toiletId = toilets.random().id,
+                    text = commentTexts.random(),
+                    userRef = users.random().id
+                )
+            )
         }
-        .collectList()
 
-    private fun addRatings(ratings: List<Rating>, toilets: List<Toilet>) = Flux.range(0, ratings.size)
+    private fun createRatings(users: List<User>, toilets: MutableList<Toilet>) = Flux.range(0, numRatings)
         .flatMap {
-            val ratingId = ratings[it].id
-            val toiletId = toilets.random().id
-            LOG.debug("Adding rating '$ratingId' to toilet '$toiletId'")
-            toiletRepository.addRating(toiletId, ratingId, ratings[it].value)
+            LOG.debug("Creating rating $it")
+            ratingRepository.save(
+                Rating(
+                    id = ObjectId(),
+                    toiletId = toilets.random().id,
+                    userRef = users.random().id,
+                    value = Random.nextInt(1, 6)
+                )
+            )
         }
-        .collectList()
 
     override fun run(vararg args: String?) {
         createUsers()
             .flatMap { users ->
-                createComments(users).map { comments ->
-                    Tuples.of(users, comments)
-                }
-            }
-            .flatMap {
-                val users = it.t1
-                val comments = it.t2
-
-                createRatings(users).map { ratings ->
-                    Tuples.of(comments, ratings)
-                }
-            }
-            .flatMap {
-                val comments = it.t1
-                val ratings = it.t2
-
                 createToilets().map { toilets ->
-                    Tuples.of(toilets, comments, ratings)
+                    Tuples.of(toilets, users)
                 }
             }
-            // add comments and ratings to toilets
-            .flatMap {
+            .flatMapMany {
                 val toilets = it.t1
-                val comments = it.t2
-                val ratings = it.t3
-                addComments(comments, toilets).map {
-                    Tuples.of(toilets, ratings)
-                }
+                val users = it.t2
+
+                Flux.merge(
+                    createComments(users, toilets),
+                    createRatings(users, toilets)
+                )
             }
-            .flatMap {
-                val toilets = it.t1
-                val ratings = it.t2
-                addRatings(ratings, toilets)
-            }
+            .collectList()
             // close application when all toilets are processed
             .subscribe {
                 GlobalScope.launch {
