@@ -50,3 +50,9 @@ class RatingDoesNotExistException(id: String) :
 
 class InvalidIdException(id: String) :
     ToilappException(HttpStatus.UNPROCESSABLE_ENTITY, "Id '$id' is not a correct hex id with 24 characters")
+
+class InvalidRatingValueException(value: Int) :
+    ToilappException(
+        HttpStatus.UNPROCESSABLE_ENTITY,
+        "Invalid rating value '$value'. A value must be an integer between 1 and 5"
+    )

@@ -1,100 +1,123 @@
 package com.github.quillraven.toilapp.service
 
+import com.github.quillraven.toilapp.InvalidIdException
+import com.github.quillraven.toilapp.InvalidRatingValueException
 import com.github.quillraven.toilapp.RatingDoesNotExistException
+import com.github.quillraven.toilapp.ToiletDoesNotExistException
 import com.github.quillraven.toilapp.model.db.Rating
-import com.github.quillraven.toilapp.model.db.User
+import com.github.quillraven.toilapp.model.db.Toilet
 import com.github.quillraven.toilapp.model.dto.CreateUpdateRatingDto
 import com.github.quillraven.toilapp.model.dto.RatingDto
-import com.github.quillraven.toilapp.model.dto.UserDto
 import com.github.quillraven.toilapp.repository.RatingRepository
 import com.github.quillraven.toilapp.repository.ToiletRepository
 import org.bson.types.ObjectId
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
-import org.springframework.transaction.annotation.Transactional
 import reactor.core.publisher.Mono
-import reactor.util.function.Tuples
 
 interface RatingService {
-    fun createRatingDto(rating: Rating, user: User? = null): RatingDto
-    fun create(userId: ObjectId, value: Int): Mono<Rating>
-    fun getById(id: String): Mono<Rating>
-    fun update(createUpdateRatingDto: CreateUpdateRatingDto): Mono<Rating>
+    fun create(createUpdateRatingDto: CreateUpdateRatingDto): Mono<RatingDto>
+    fun update(createUpdateRatingDto: CreateUpdateRatingDto): Mono<RatingDto>
+    fun getAverageRating(toilet: Toilet): Mono<Double>
     fun delete(id: String): Mono<Void>
-    fun deleteOnlyRating(ratingId: ObjectId): Mono<Void>
+    fun deleteByToiletId(toiletId: ObjectId): Mono<Void>
 }
 
 @Service
 class DefaultRatingService(
     @Autowired private val ratingRepository: RatingRepository,
+    @Autowired private val userService: UserService,
     @Autowired private val toiletRepository: ToiletRepository
 ) : RatingService {
+    override fun create(createUpdateRatingDto: CreateUpdateRatingDto): Mono<RatingDto> {
+        LOG.debug("create: $createUpdateRatingDto")
 
-    /**
-     * Returns a [RatingDto] instance out of the given [rating].
-     * The [UserDto] of the comment only contains the id. Name and email
-     * need to be fetched separately.
-     */
-    override fun createRatingDto(rating: Rating, user: User?) = RatingDto(
-        rating.id.toHexString(),
-        UserDto(rating.userRef.toHexString(), user?.name ?: "", ""),
-        rating.value
-    )
+        return when {
+            !ObjectId.isValid(createUpdateRatingDto.toiletId) -> Mono.error(InvalidIdException(createUpdateRatingDto.toiletId))
+            !createUpdateRatingDto.isValidValue() -> Mono.error(InvalidRatingValueException(createUpdateRatingDto.value))
+            else -> {
+                val toiletId = ObjectId(createUpdateRatingDto.toiletId)
+                val currentUserId = userService.getCurrentUserId()
 
-    override fun create(userId: ObjectId, value: Int): Mono<Rating> {
-        LOG.debug("create: (userId=$userId, value=$value)")
-        return ratingRepository
-            .save(Rating(userRef = userId, value = value))
-    }
-
-    override fun getById(id: String): Mono<Rating> {
-        LOG.debug("getById: (id=$id)")
-        return ratingRepository
-            .findById(ObjectId(id))
-            .switchIfEmpty(Mono.error(RatingDoesNotExistException(id)))
-    }
-
-    override fun update(createUpdateRatingDto: CreateUpdateRatingDto): Mono<Rating> {
-        LOG.debug("update: $createUpdateRatingDto")
-        return getById(createUpdateRatingDto.ratingId)
-            .flatMap {
-                ratingRepository.save(
-                    it.copy(
-                        id = ObjectId(createUpdateRatingDto.ratingId),
-                        value = createUpdateRatingDto.value
-                    )
-                )
+                toiletRepository
+                    .findById(toiletId)
+                    .switchIfEmpty(Mono.error(ToiletDoesNotExistException(createUpdateRatingDto.toiletId)))
+                    .flatMap { userService.getCurrentUser() }
+                    .flatMap {
+                        Mono.zip(
+                            Mono.just(it),
+                            ratingRepository.save(
+                                Rating(
+                                    toiletId = ObjectId(createUpdateRatingDto.toiletId),
+                                    userRef = currentUserId,
+                                    value = createUpdateRatingDto.value
+                                )
+                            )
+                        )
+                    }
+                    .map {
+                        val userDto = it.t1
+                        val rating = it.t2
+                        rating.createRatingDto(userDto)
+                    }
             }
+        }
     }
 
-    @Transactional
+    private fun getById(id: String): Mono<Rating> {
+        LOG.debug("getById: (id=$id)")
+
+        return when {
+            !ObjectId.isValid(id) -> Mono.error(InvalidIdException(id))
+            else -> ratingRepository
+                .findById(ObjectId(id))
+                .switchIfEmpty(Mono.error(RatingDoesNotExistException(id)))
+        }
+    }
+
+    override fun update(createUpdateRatingDto: CreateUpdateRatingDto): Mono<RatingDto> {
+        LOG.debug("update: $createUpdateRatingDto")
+
+        return when {
+            !createUpdateRatingDto.isValidValue() -> Mono.error(InvalidRatingValueException(createUpdateRatingDto.value))
+            else -> getById(createUpdateRatingDto.ratingId)
+                .flatMap {
+                    ratingRepository.save(
+                        it.copy(
+                            id = ObjectId(createUpdateRatingDto.ratingId),
+                            value = createUpdateRatingDto.value
+                        )
+                    )
+                }
+                .flatMap { rating ->
+                    Mono.zip(Mono.just(rating), userService.getById(rating.userRef))
+                }
+                .map {
+                    it.t1.createRatingDto(it.t2)
+                }
+        }
+    }
+
+    override fun getAverageRating(toilet: Toilet): Mono<Double> {
+        LOG.debug("getAverageRating: (toilet=$toilet)")
+
+        return ratingRepository.getAverageRating(toilet)
+    }
+
     override fun delete(id: String): Mono<Void> {
         LOG.debug("delete: (id=$id)")
-        val ratingId = ObjectId(id)
 
-        return ratingRepository.findById(ratingId)
-            .flatMapMany { rating ->
-                toiletRepository.findByRatingRefsContains(ratingId).map {
-                    Tuples.of(rating, it)
-                }
-            }
-            // remove rating from any toilets
-            .flatMap {
-                val rating = it.t1
-                val toilet = it.t2
-
-                LOG.debug("Deleting rating from toilet ${toilet.id}")
-
-                toiletRepository.removeRating(toilet.id, rating.id, rating.value)
-            }
-            // remove rating itself
-            .then(deleteOnlyRating(ratingId))
+        return when {
+            !ObjectId.isValid(id) -> Mono.error(InvalidIdException(id))
+            else -> ratingRepository.deleteById(ObjectId(id))
+        }
     }
 
-    override fun deleteOnlyRating(ratingId: ObjectId): Mono<Void> {
-        LOG.debug("Deleting rating '$ratingId'")
-        return ratingRepository.deleteById(ratingId)
+    override fun deleteByToiletId(toiletId: ObjectId): Mono<Void> {
+        LOG.debug("deleteByToiletId: (toiletId=$toiletId)")
+
+        return ratingRepository.deleteByToiletId(toiletId)
     }
 
     companion object {

@@ -19,7 +19,6 @@ data class Toilet(
     val description: String = "",
     @GeoSpatialIndexed(name = "location", type = GeoSpatialIndexType.GEO_2DSPHERE)
     val location: GeoJsonPoint = GeoJsonPoint(0.0, 0.0),
-    val totalRating: Int = 0,
     val disabled: Boolean = false,
     val toiletCrewApproved: Boolean = false
 ) {
