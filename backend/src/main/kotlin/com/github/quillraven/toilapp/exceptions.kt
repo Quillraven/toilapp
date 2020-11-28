@@ -47,3 +47,6 @@ class CommentDoesNotExistException(id: String) :
 
 class RatingDoesNotExistException(id: String) :
     ToilappException(HttpStatus.NOT_FOUND, "Rating of id '$id' does not exist!")
+
+class InvalidIdException(id: String) :
+    ToilappException(HttpStatus.UNPROCESSABLE_ENTITY, "Id '$id' is not a correct hex id with 24 characters")

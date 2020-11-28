@@ -1,5 +1,7 @@
 package com.github.quillraven.toilapp.model.db
 
+import com.github.quillraven.toilapp.model.dto.ToiletDetailsDto
+import com.github.quillraven.toilapp.model.dto.ToiletOverviewDto
 import org.bson.types.ObjectId
 import org.springframework.data.annotation.Id
 import org.springframework.data.mongodb.core.geo.GeoJsonPoint
@@ -17,8 +19,39 @@ data class Toilet(
     val description: String = "",
     @GeoSpatialIndexed(name = "location", type = GeoSpatialIndexType.GEO_2DSPHERE)
     val location: GeoJsonPoint = GeoJsonPoint(0.0, 0.0),
-    val previewID: ObjectId? = null,
     val totalRating: Int = 0,
     val disabled: Boolean = false,
     val toiletCrewApproved: Boolean = false
-)
+) {
+    fun createToiletDetailsDto(
+        distance: Double,
+        previewURL: String,
+        rating: Double,
+        numComments: Long
+    ) = ToiletDetailsDto(
+        id = id.toHexString(),
+        title = title,
+        description = description,
+        location = location,
+        distance = distance,
+        previewURL = previewURL,
+        rating = rating,
+        numComments = numComments,
+        disabled = disabled,
+        toiletCrewApproved = toiletCrewApproved
+    )
+
+    fun createToiletOverviewDto(
+        distance: Double,
+        previewURL: String,
+        rating: Double
+    ) = ToiletOverviewDto(
+        id = id.toHexString(),
+        title = title,
+        distance = distance,
+        previewURL = previewURL,
+        rating = rating,
+        disabled = disabled,
+        toiletCrewApproved = toiletCrewApproved
+    )
+}
