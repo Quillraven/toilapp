@@ -1,6 +1,7 @@
 package com.github.quillraven.toilapp.service
 
 import com.github.quillraven.toilapp.ToilappSystemProperties
+import com.github.quillraven.toilapp.UserDoesNotExistException
 import com.github.quillraven.toilapp.model.db.User
 import com.github.quillraven.toilapp.model.dto.CreateUpdateUserDto
 import com.github.quillraven.toilapp.model.dto.UserDto
@@ -51,9 +52,7 @@ class DefaultUserService(
     override fun getCurrentUser(): Mono<UserDto> {
         LOG.debug("getCurrentUser")
 
-        return userRepository
-            .findById(getCurrentUserId())
-            .map { it.createUserDto() }
+        return getById(getCurrentUserId())
     }
 
     override fun getById(userId: ObjectId): Mono<UserDto> {
@@ -61,6 +60,7 @@ class DefaultUserService(
 
         return userRepository
             .findById(userId)
+            .switchIfEmpty(Mono.error(UserDoesNotExistException(userId.toHexString())))
             .map { it.createUserDto() }
     }
 
