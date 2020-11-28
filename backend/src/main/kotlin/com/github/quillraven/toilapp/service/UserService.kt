@@ -1,8 +1,8 @@
 package com.github.quillraven.toilapp.service
 
 import com.github.quillraven.toilapp.ToilappSystemProperties
-import com.github.quillraven.toilapp.UserDoesNotExistException
 import com.github.quillraven.toilapp.model.db.User
+import com.github.quillraven.toilapp.model.dto.CreateUpdateUserDto
 import com.github.quillraven.toilapp.model.dto.UserDto
 import com.github.quillraven.toilapp.repository.UserRepository
 import org.bson.types.ObjectId
@@ -12,52 +12,56 @@ import org.springframework.stereotype.Service
 import reactor.core.publisher.Mono
 
 interface UserService {
-    fun create(user: User): Mono<UserDto>
-    fun getById(id: String): Mono<User>
-    fun getById(objectId: ObjectId): Mono<User>
+    fun create(createUpdateUserDto: CreateUpdateUserDto): Mono<UserDto>
     fun getCurrentUserId(): ObjectId
+    fun getCurrentUser(): Mono<UserDto>
+    fun getById(userId: ObjectId): Mono<UserDto>
 }
 
 @Service
 class DefaultUserService(
     @Autowired private val userRepository: UserRepository
 ) : UserService {
-    /**
-     * Returns a [UserDto] instance out of the given [user].
-     */
-    private fun createUserDto(user: User) = UserDto(
-        user.id.toHexString(),
-        user.name,
-        user.email
-    )
+    override fun create(createUpdateUserDto: CreateUpdateUserDto): Mono<UserDto> {
+        LOG.debug("create: $createUpdateUserDto")
 
-    override fun create(user: User): Mono<UserDto> {
-        LOG.debug("create: (user=$user)")
         return userRepository
-            .save(user)
-            .map { createUserDto(it) }
+            .save(
+                User(
+                    email = createUpdateUserDto.email,
+                    name = createUpdateUserDto.name
+                )
+            )
+            .map { it.createUserDto() }
     }
-
-    override fun getById(objectId: ObjectId): Mono<User> {
-        LOG.debug("getById: (id=$objectId)")
-        return userRepository
-            .findById(objectId)
-            .switchIfEmpty(Mono.error(UserDoesNotExistException(objectId.toHexString())))
-    }
-
-    override fun getById(id: String) = getById(ObjectId(id))
 
     override fun getCurrentUserId(): ObjectId {
         return when {
             ToilappSystemProperties.isDevMode() -> {
                 //return dev user created by DataLoaderApplication
-                ObjectId("000000000000012343456789")
+                ObjectId("5fc2600fa23d8d7fcaba9e94")
             }
             else -> {
                 //TODO return user from request
-                ObjectId("000000000000012343456789")
+                ObjectId("5fc2600fa23d8d7fcaba9e94")
             }
         }
+    }
+
+    override fun getCurrentUser(): Mono<UserDto> {
+        LOG.debug("getCurrentUser")
+
+        return userRepository
+            .findById(getCurrentUserId())
+            .map { it.createUserDto() }
+    }
+
+    override fun getById(userId: ObjectId): Mono<UserDto> {
+        LOG.debug("getById: (userId=$userId)")
+
+        return userRepository
+            .findById(userId)
+            .map { it.createUserDto() }
     }
 
     companion object {
