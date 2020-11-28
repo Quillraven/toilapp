@@ -3,13 +3,12 @@ package com.github.quillraven.toilapp.service
 import org.bson.types.ObjectId
 import org.springframework.http.codec.multipart.FilePart
 import reactor.core.publisher.Mono
-import java.io.InputStream
-import java.util.concurrent.Callable
 
 interface ImageService {
-    fun create(filePartMono: Mono<FilePart>): Mono<String>
-    fun get(id: String): Mono<ByteArray>
-    fun store(inStreamCallable: Callable<InputStream>, name: String): Mono<ObjectId>
+    fun createPreview(filePartMono: Mono<FilePart>, toiletId: String): Mono<String>
+    fun updatePreview(filePartMono: Mono<FilePart>, toiletId: String): Mono<String>
+    fun getContent(id: String): Mono<ByteArray>
+    fun getPreviewURL(toiletId: ObjectId): Mono<String>
     fun delete(id: String): Mono<Void>
-    fun deleteOnlyImage(imageId: ObjectId): Mono<Void>
+    fun deleteByToiletId(toiletId: ObjectId): Mono<Void>
 }

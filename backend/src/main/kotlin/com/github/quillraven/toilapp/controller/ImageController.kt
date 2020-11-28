@@ -1,15 +1,14 @@
 package com.github.quillraven.toilapp.controller
 
 import com.github.quillraven.toilapp.service.ImageService
-import com.github.quillraven.toilapp.service.ToiletService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.http.codec.multipart.FilePart
-import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RequestPart
@@ -17,30 +16,32 @@ import org.springframework.web.bind.annotation.ResponseBody
 import org.springframework.web.bind.annotation.RestController
 import reactor.core.publisher.Mono
 
+const val IMAGES_REST_PATH_V1 = "/api/v1/images"
+
 @RestController
-@RequestMapping("/api")
-class PreviewImageController(
-    @Autowired private val imageService: ImageService,
-    @Autowired private val toiletService: ToiletService
+@RequestMapping(IMAGES_REST_PATH_V1)
+class ImageController(
+    @Autowired private val imageService: ImageService
 ) {
-    /*
-      FIXME: Transactional is currently not supported by GridFS and therefore we could potentially
-       create images that are not linked to any toilet -> let's fix that later ;)
-    */
-    @PostMapping("/previews")
-    @Transactional
+    @PostMapping("/preview")
     fun createPreviewImage(
         @RequestPart("file") file: Mono<FilePart>,
         @RequestParam("toiletId") toiletId: String
-    ) = toiletService.createAndLinkImage(file, toiletId)
+    ) = imageService.createPreview(file, toiletId)
+
+    @PutMapping("/preview")
+    fun updatePreviewImage(
+        @RequestPart("file") file: Mono<FilePart>,
+        @RequestParam("toiletId") toiletId: String
+    ) = imageService.updatePreview(file, toiletId)
 
     @GetMapping(
-        value = ["/previews/{id}"],
+        value = ["/{id}"],
         produces = [MediaType.IMAGE_JPEG_VALUE, MediaType.IMAGE_PNG_VALUE]
     )
     @ResponseBody
-    fun getPreviewImage(@PathVariable id: String) = imageService.get(id)
+    fun getContent(@PathVariable id: String) = imageService.getContent(id)
 
-    @DeleteMapping("/previews/{id}")
-    fun deletePreviewImage(@PathVariable id: String) = imageService.delete(id)
+    @DeleteMapping("/{id}")
+    fun delete(@PathVariable id: String) = imageService.delete(id)
 }
