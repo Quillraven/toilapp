@@ -1,16 +1,14 @@
-import {ToiletComment} from "./ToiletComment";
 import {GeoLocation} from "./GeoLocation";
 
-export interface Toilet {
+export interface ToiletDetails {
     id: string,
     title: string,
+    description: string,
     location: GeoLocation,
     distance: number,
     previewURL: string,
     rating: number,
+    numComments: number,
     disabled: boolean,
     toiletCrewApproved: boolean,
-    description: string,
-    comments: Array<ToiletComment>,
-    images: Array<string>,
 }
