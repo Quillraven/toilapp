@@ -19,11 +19,11 @@ class ToiletController(
     @Autowired private val toiletService: ToiletService
 ) {
     @PostMapping
-    fun createToilet(@RequestBody createUpdateToiletDto: CreateUpdateToiletDto) =
+    fun create(@RequestBody createUpdateToiletDto: CreateUpdateToiletDto) =
         toiletService.create(createUpdateToiletDto)
 
     @PutMapping
-    fun updateToilet(@RequestBody createUpdateToiletDto: CreateUpdateToiletDto) =
+    fun update(@RequestBody createUpdateToiletDto: CreateUpdateToiletDto) =
         toiletService.update(createUpdateToiletDto)
 
     @GetMapping
@@ -41,5 +41,5 @@ class ToiletController(
     ) = toiletService.getToiletDetails(id, lon, lat)
 
     @DeleteMapping("/{id}")
-    fun deleteToilet(@PathVariable id: String) = toiletService.delete(id)
+    fun delete(@PathVariable id: String) = toiletService.delete(id)
 }

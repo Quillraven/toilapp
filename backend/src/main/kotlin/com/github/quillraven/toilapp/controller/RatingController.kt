@@ -17,13 +17,13 @@ class RatingController(
     @Autowired private val ratingService: RatingService
 ) {
     @PostMapping
-    fun createRating(@RequestBody createUpdateRatingDto: CreateUpdateRatingDto) =
+    fun create(@RequestBody createUpdateRatingDto: CreateUpdateRatingDto) =
         ratingService.create(createUpdateRatingDto)
 
     @PutMapping
-    fun updateRating(@RequestBody createUpdateRatingDto: CreateUpdateRatingDto) =
+    fun update(@RequestBody createUpdateRatingDto: CreateUpdateRatingDto) =
         ratingService.update(createUpdateRatingDto)
 
     @DeleteMapping("/{id}")
-    fun deleteRating(@PathVariable id: String) = ratingService.delete(id)
+    fun delete(@PathVariable id: String) = ratingService.delete(id)
 }

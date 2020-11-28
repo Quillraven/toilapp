@@ -49,7 +49,7 @@ class DefaultRatingService(
                             Mono.just(it),
                             ratingRepository.save(
                                 Rating(
-                                    toiletId = ObjectId(createUpdateRatingDto.toiletId),
+                                    toiletId = toiletId,
                                     userRef = currentUserId,
                                     value = createUpdateRatingDto.value
                                 )
