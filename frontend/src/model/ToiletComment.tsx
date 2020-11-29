@@ -1,8 +1,9 @@
 import {User} from "./User";
+import {LocalDateTime} from "./LocalDateTime";
 
 export interface ToiletComment {
     id: string,
     user: User,
-    date: Date,
+    localDateTime: LocalDateTime,
     text: string,
 }

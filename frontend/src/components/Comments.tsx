@@ -1,12 +1,12 @@
 import {createStyles, makeStyles, Theme} from "@material-ui/core/styles";
 import React, {useEffect, useState} from "react";
-import {Toilet} from "../model/Toilet";
 import {ToiletComment} from "../model/ToiletComment"
-import {RestToiletService, ToiletService} from "../services/ToiletService";
 import TextField from "@material-ui/core/TextField"
 import {Divider, GridList, GridListTile, IconButton, Snackbar, Typography} from "@material-ui/core";
 import {Send} from "@material-ui/icons";
 import {Alert, Color} from "@material-ui/lab";
+import {ToiletDetails} from "../model/ToiletDetails";
+import {CommentService, RestCommentService} from "../services/CommentService";
 
 const useStyles = makeStyles((theme: Theme) =>
     createStyles({
@@ -45,7 +45,7 @@ interface AlertState {
 }
 
 interface CommentsProps {
-    toilet: Toilet
+    toiletDetails: ToiletDetails
 }
 
 export default function Comments(props: CommentsProps) {
@@ -53,31 +53,24 @@ export default function Comments(props: CommentsProps) {
     const [comments, setComments] = useState<ToiletComment[]>([]);
     const [newCommentText, setNewCommentText] = useState<string>("")
     const [alert, setAlert] = useState<AlertState>({text: "", show: false, severity: "info"})
-    const toiletService: ToiletService = new RestToiletService();
+    const commentService: CommentService = new RestCommentService();
 
     const updateComment = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         setNewCommentText(e.currentTarget.value)
     }
 
     const postComment = () => {
-        toiletService
-            .postComment(props.toilet.id, newCommentText)
+        commentService
+            .postComment(props.toiletDetails.id, newCommentText)
             .then(response => {
                 if (response) {
-                    console.log("Comment posted")
+                    console.log(`Comment ${JSON.stringify(response)} posted`)
                     setNewCommentText("")
                     setAlert({text: "Successfully posted comment!", show: true, severity: "success"})
-                    return toiletService.getComments(props.toilet)
+                    setComments([response, ...comments])
+                } else {
+                    setAlert({text: "Could not post comment!", show: true, severity: "error"})
                 }
-                throw Error("Could not post comment")
-            })
-            .then(comments => {
-                console.log(`New comments: ${comments.length}`)
-                setComments(comments)
-            })
-            .catch((error) => {
-                setAlert({text: "Could not post comment!", show: true, severity: "error"})
-                console.error(`Error while posting comment: ${error}`)
             })
     };
 
@@ -86,22 +79,25 @@ export default function Comments(props: CommentsProps) {
     }
 
     useEffect(() => {
-        toiletService
-            .getComments(props.toilet)
-            .then(comments => {
-                console.log(`${comments.length} comments loaded`)
-                setComments(comments)
-            })
+        if (props.toiletDetails.id) {
+            commentService
+                //TODO get page, numComments depending on device
+                .getComments(props.toiletDetails.id, 0, 10)
+                .then(comments => {
+                    console.log(`${comments.length} comments loaded`)
+                    setComments(comments)
+                })
+        }
         // eslint-disable-next-line
-    }, []);
+    }, [props.toiletDetails]);
 
     return (
         <React.Fragment>
             <div className={classes.header}>
-                <h4>{comments.length} Comments</h4>
+                <h4>{props.toiletDetails.numComments} Comments</h4>
                 <form className={classes.addCommentForm} noValidate autoComplete="off">
                     <TextField
-                        id={"Comments-for-" + props.toilet.id}
+                        id={"Comments-for-" + props.toiletDetails.id}
                         placeholder="Add Comment"
                         value={newCommentText}
                         multiline
@@ -126,16 +122,25 @@ export default function Comments(props: CommentsProps) {
                 <GridList cellHeight="auto" className={classes.commentGridList} cols={1}>
                     {
                         comments.map((comment, idx) => (
-                            <div className={classes.commentDiv} key={`Comment-${props.toilet.id}-${idx}`}>
+                            <div className={classes.commentDiv} key={`Comment-${props.toiletDetails.id}-${idx}`}>
                                 <GridListTile>
                                     <Typography color="textSecondary">
-                                        {comment.date.toLocaleTimeString(navigator.language, {
-                                            year: "numeric",
-                                            month: "numeric",
-                                            day: "numeric",
-                                            hour: "2-digit",
-                                            minute: "2-digit"
-                                        })}
+                                        {
+                                            new Date(
+                                                comment.localDateTime.year,
+                                                comment.localDateTime.monthValue - 1,
+                                                comment.localDateTime.dayOfMonth,
+                                                comment.localDateTime.hour,
+                                                comment.localDateTime.minute,
+                                                comment.localDateTime.second
+                                            ).toLocaleTimeString(navigator.language, {
+                                                year: "numeric",
+                                                month: "numeric",
+                                                day: "numeric",
+                                                hour: "2-digit",
+                                                minute: "2-digit"
+                                            })
+                                        }
                                     </Typography>
                                     <Typography variant="h5" component="h2" gutterBottom>
                                         {comment.user.name}

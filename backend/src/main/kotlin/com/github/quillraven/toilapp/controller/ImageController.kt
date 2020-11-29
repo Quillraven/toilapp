@@ -16,10 +16,10 @@ import org.springframework.web.bind.annotation.ResponseBody
 import org.springframework.web.bind.annotation.RestController
 import reactor.core.publisher.Mono
 
-const val IMAGES_REST_PATH_V1 = "/api/v1/images"
+const val IMAGES_REST_PATH_V1 = "/v1/images"
 
 @RestController
-@RequestMapping(IMAGES_REST_PATH_V1)
+@RequestMapping("/api$IMAGES_REST_PATH_V1")
 class ImageController(
     @Autowired private val imageService: ImageService
 ) {

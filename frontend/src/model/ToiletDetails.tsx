@@ -12,3 +12,19 @@ export interface ToiletDetails {
     disabled: boolean,
     toiletCrewApproved: boolean,
 }
+
+export const EMPTY_DETAILS: ToiletDetails = {
+    id: "",
+    title: "",
+    description: "",
+    location: {
+        lon: 0,
+        lat: 0
+    },
+    distance: 0,
+    previewURL: "",
+    rating: 0,
+    numComments: 0,
+    disabled: false,
+    toiletCrewApproved: false,
+}

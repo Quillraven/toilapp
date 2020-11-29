@@ -17,7 +17,7 @@ import reactor.core.publisher.Mono
 interface CommentRepository : ReactiveMongoRepository<Comment, ObjectId>, CustomCommentRepository {
     fun deleteByToiletId(toiletId: ObjectId): Mono<Void>
 
-    fun findAllByToiletIdOrderByDateDesc(toiletId: ObjectId, pageable: Pageable): Flux<Comment>
+    fun findAllByToiletIdOrderByLocalDateTimeDesc(toiletId: ObjectId, pageable: Pageable): Flux<Comment>
 }
 
 interface CustomCommentRepository {

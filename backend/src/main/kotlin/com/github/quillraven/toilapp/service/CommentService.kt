@@ -53,7 +53,7 @@ class DefaultCommentService(
                                 Comment(
                                     toiletId = toiletId,
                                     userRef = currentUserId,
-                                    date = LocalDateTime.now(),
+                                    localDateTime = LocalDateTime.now(),
                                     text = createUpdateCommentDto.text
                                 )
                             )
@@ -89,7 +89,7 @@ class DefaultCommentService(
                     it.copy(
                         id = ObjectId(createUpdateCommentDto.commentId),
                         text = createUpdateCommentDto.text,
-                        date = LocalDateTime.now()
+                        localDateTime = LocalDateTime.now()
                     )
                 )
             }
@@ -111,7 +111,7 @@ class DefaultCommentService(
         return when {
             !ObjectId.isValid(toiletId) -> Flux.error(InvalidIdException(toiletId))
             else -> commentRepository
-                .findAllByToiletIdOrderByDateDesc(ObjectId(toiletId), PageRequest.of(page, numComments))
+                .findAllByToiletIdOrderByLocalDateTimeDesc(ObjectId(toiletId), PageRequest.of(page, numComments))
                 // use flatMapSequential instead of flatMap to keep the sorted order of the comments.
                 // Otherwise it will get unsorted again because of the userService.getById call
                 .flatMapSequential {

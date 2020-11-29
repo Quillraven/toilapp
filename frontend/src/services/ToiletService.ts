@@ -1,27 +1,28 @@
 import {API_ENDPOINT} from "./ServiceConstants";
 import axios from "axios";
-import {Toilet} from "../model/Toilet";
 import {GeoLocation} from "../model/GeoLocation";
-import {CreateUpdateComment, ToiletComment} from "../model/ToiletComment";
+import {ToiletOverview} from "../model/ToiletOverview";
+import {ToiletDetails} from "../model/ToiletDetails";
 
 export interface ToiletService {
-    getToilets(geoLocation: GeoLocation): Promise<Toilet[]>
+    getToilets(geoLocation: GeoLocation, maxDistanceInMeters: number): Promise<ToiletOverview[]>
 
-    getComments(toilet: Toilet): Promise<ToiletComment[]>
-
-    postComment(toiletId: string, text: string): Promise<ToiletComment>
+    getToiletDetails(toiletId: string, location: GeoLocation): Promise<ToiletDetails>
 }
 
 export class RestToiletService implements ToiletService {
-    private maxDistance = 2000000;
-
-    public getToilets(geoLocation: GeoLocation): Promise<Toilet[]> {
+    public getToilets(geoLocation: GeoLocation, maxDistanceInMeters: number): Promise<ToiletOverview[]> {
         return axios
-            .get(API_ENDPOINT + '/toilets?lon=' + geoLocation.lon + "&lat=" + geoLocation.lat + "&maxDistanceInMeters=" + this.maxDistance)
+            .get(
+                API_ENDPOINT + `/v1/toilets?` +
+                `lon=${geoLocation.lon}` +
+                `&lat=${geoLocation.lat}` +
+                `&maxDistanceInMeters=${maxDistanceInMeters}`
+            )
             .then(response => {
-                const toilets: Toilet[] = response.data
+                const toiletOverviews: ToiletOverview[] = response.data
 
-                toilets.filter(it => it.previewURL)
+                toiletOverviews.filter(it => it.previewURL)
                     .forEach(it => it.previewURL = API_ENDPOINT + it.previewURL)
 
                 return response.data
@@ -30,129 +31,92 @@ export class RestToiletService implements ToiletService {
             })
     }
 
-    public getComments(toilet: Toilet): Promise<ToiletComment[]> {
-        return axios
-            .get(API_ENDPOINT + `/comments/${toilet.id}`)
-            .then(response => {
-                const comments: ToiletComment[] = response.data
-
-                // TODO is there a way to retrieve already a correct date instance from REST directly?
-                //  we currently receive a string
-                comments.forEach(it => it.date = new Date(it.date))
-
-                return response.data
-            }, error => {
-                console.error(`Could not get comments for toilet '${toilet.id}'. Error=${error}`)
-            })
-    }
-
-    public postComment(toiletId: string, text: string): Promise<ToiletComment> {
-        console.log(`Posting '${text}'`)
+    public getToiletDetails(toiletId: string, location: GeoLocation): Promise<ToiletDetails> {
+        console.log(`getToiletDetails for '${toiletId}'`)
 
         return axios
-            .post(
-                API_ENDPOINT + `/comments`,
-                {
-                    commentId: "",
-                    toiletId: toiletId,
-                    text: text,
-                } as CreateUpdateComment
+            .get(
+                API_ENDPOINT + `/v1/toilets/${toiletId}?` +
+                `lon=${location.lon}` +
+                `&lat=${location.lat}`
             )
             .then(response => {
-                const comment: ToiletComment = response.data
+                const toiletDetails: ToiletDetails = response.data
 
-                // TODO is there a way to retrieve already a correct date instance from REST directly?
-                //  we currently receive a string
-                comment.date = new Date(comment.date)
+                if (toiletDetails.previewURL) {
+                    toiletDetails.previewURL = API_ENDPOINT + toiletDetails.previewURL
+                }
 
                 return response.data
             }, error => {
-                console.error(`Could not post comment for toilet '${toiletId}'. Error=${error}`)
+                console.error(`Could not load toilet details for '${toiletId}'. Error=${error}`)
             })
     }
 }
 
 export class MockToiletService implements ToiletService {
-    getToilets(): Promise<Toilet[]> {
-        return new Promise<Toilet[]>(function (resolve) {
-            const toilets: Toilet[] = [
+    public getToilets(geoLocation: GeoLocation, maxDistanceInMeters: number): Promise<ToiletOverview[]> {
+        return new Promise<ToiletOverview[]>(function (resolve) {
+            const toilets: ToiletOverview[] = [
                 {
                     id: "1",
                     title: "Beautiful toilet",
-                    location: {lon: 47.0, lat: 16.0},
+                    distance: 2313.0,
                     previewURL: "/toilet.jpg",
                     rating: 4.6,
                     disabled: false,
                     toiletCrewApproved: true,
-                    description: "Very very great",
-                    comments: [],
-                    images: [],
-                    distance: 2313.0
                 },
                 {
                     id: "2",
                     title: "Dirty toilet",
-                    location: {lon: 47.0, lat: 16.0},
+                    distance: 893.0,
                     previewURL: "/toilet2.jpg",
                     rating: 1.3,
                     disabled: false,
                     toiletCrewApproved: true,
-                    description: "Disgusting",
-                    comments: [],
-                    images: [],
-                    distance: 893.0
                 },
                 {
                     id: "3",
                     title: "Porta Potty",
-                    location: {lon: 47.0, lat: 16.0},
+                    distance: 7384.2,
                     previewURL: "/toilet.jpg",
                     rating: 2.5,
                     disabled: false,
                     toiletCrewApproved: true,
-                    description: "Smells very good ;)",
-                    comments: [],
-                    images: [],
-                    distance: 7384.2
                 },
                 {
                     id: "4",
                     title: "Shit Heaven",
-                    location: {lon: 47.0, lat: 16.0},
+                    distance: 341.12,
                     previewURL: "/toilet2.jpg",
                     rating: 2.5,
                     disabled: false,
                     toiletCrewApproved: true,
-                    description: "So wonderful!!!!",
-                    comments: [],
-                    images: [],
-                    distance: 341.12
                 },
             ];
             resolve(toilets);
         });
     }
 
-    getComments(toilet: Toilet): Promise<ToiletComment[]> {
-        return new Promise<ToiletComment[]>(function (resolve) {
-            const comments: ToiletComment[] = []
-            resolve(comments)
-        })
-    }
-
-    postComment(toiletId: string, text: string): Promise<ToiletComment> {
-        return new Promise<ToiletComment>(function (resolve) {
-            const comment: ToiletComment = {
-                id: "",
-                user: {
-                    name: "",
-                    email: "",
-                    id: ""
+    getToiletDetails(toiletId: string, location: GeoLocation): Promise<ToiletDetails> {
+        return new Promise<ToiletDetails>(function (resolve) {
+            const toiletDetails: ToiletDetails = {
+                id: "1",
+                title: "Beautiful toilet",
+                description: "Best shit experience you'll ever have!",
+                location: {
+                    lat: 42,
+                    lon: 42,
                 },
-                date: new Date(),
-                text: ""
+                distance: 2313.0,
+                previewURL: "/toilet.jpg",
+                rating: 4.6,
+                numComments: 0,
+                disabled: false,
+                toiletCrewApproved: true,
             }
-            resolve(comment)
+            resolve(toiletDetails)
         })
     }
 }

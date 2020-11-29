@@ -3,8 +3,8 @@ import {RestToiletService, ToiletService} from '../services/ToiletService';
 import {createStyles, makeStyles, Theme} from '@material-ui/core/styles';
 import ToiletOverviewItem from "../components/ToiletOverviewItem";
 import {DefaultGeoLocationService, GeoLocationService} from '../services/GeoLocationService';
-import {Toilet} from "../model/Toilet";
 import {Grid} from "@material-ui/core";
+import {ToiletOverview} from "../model/ToiletOverview";
 
 const useStyles = makeStyles((theme: Theme) =>
     createStyles({
@@ -15,18 +15,19 @@ const useStyles = makeStyles((theme: Theme) =>
     }),
 );
 
-export default function ToiletOverview() {
+export default function ToiletOverviewView() {
     const classes = useStyles();
-    const [toilets, setToilets] = useState<Toilet[]>([]);
+    const [toiletOverviews, setToiletOverviews] = useState<ToiletOverview[]>([]);
     const toiletService: ToiletService = new RestToiletService();
     const locationService: GeoLocationService = new DefaultGeoLocationService();
 
     useEffect(() => {
         toiletService
-            .getToilets(locationService.getGeoLocation())
-            .then(toilets => {
+            //TODO get maxDistanceInMeters from current user preferences
+            .getToilets(locationService.getGeoLocation(), 4000000)
+            .then(toiletOverviews => {
                 console.log("Toilet data loaded")
-                setToilets(toilets)
+                setToiletOverviews(toiletOverviews)
             })
         // eslint-disable-next-line
     }, []);
@@ -40,9 +41,10 @@ export default function ToiletOverview() {
                 alignItems="center"
                 spacing={3}>
                 {
-                    toilets.map(toilet => (
-                        <Grid item key={`GridItem-${toilet.id}`} style={{width: "400px"}}>
-                            <ToiletOverviewItem toilet={toilet} key={`OverviewItem-${toilet.id}`}/>
+                    toiletOverviews.map(toiletOverview => (
+                        <Grid item key={`GridItem-${toiletOverview.id}`} style={{width: "400px"}}>
+                            <ToiletOverviewItem toiletOverview={toiletOverview}
+                                                key={`OverviewItem-${toiletOverview.id}`}/>
                         </Grid>
                     ))
                 }

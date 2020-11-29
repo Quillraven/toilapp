@@ -17,13 +17,13 @@ data class Comment(
     val toiletId: ObjectId = ObjectId(),
     val userRef: ObjectId = ObjectId(),
     @LastModifiedDate
-    val date: LocalDateTime = LocalDateTime.now(),
+    val localDateTime: LocalDateTime = LocalDateTime.now(),
     val text: String = ""
 ) {
     fun createCommentDto(user: UserDto) = CommentDto(
         id = id.toHexString(),
         user = user,
-        date = date,
+        localDateTime = localDateTime,
         text = text
     )
 }
