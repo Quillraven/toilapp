@@ -1,4 +1,3 @@
-import {API_ENDPOINT} from "./ServiceConstants";
 import axios from "axios";
 import {ToiletComment} from "../model/ToiletComment";
 import {CreateUpdateComment} from "../model/CreateUpdateComment";
@@ -15,7 +14,7 @@ export class RestCommentService implements CommentService {
 
         return axios
             .get(
-                API_ENDPOINT + `/v1/comments/${toiletId}?` +
+                process.env.REACT_APP_API_ENDPOINT + `/v1/comments/${toiletId}?` +
                 `page=${page}` +
                 `&numComments=${numComments}`
             )
@@ -31,7 +30,7 @@ export class RestCommentService implements CommentService {
 
         return axios
             .post(
-                API_ENDPOINT + `/v1/comments`,
+                process.env.REACT_APP_API_ENDPOINT + `/v1/comments`,
                 {
                     commentId: "",
                     toiletId: toiletId,

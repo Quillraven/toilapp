@@ -5,6 +5,7 @@ import ToiletOverviewItem from "../components/ToiletOverviewItem";
 import {DefaultGeoLocationService, GeoLocationService} from '../services/GeoLocationService';
 import {Grid} from "@material-ui/core";
 import {ToiletOverview} from "../model/ToiletOverview";
+import {ToiletService, ToiletServiceProvider} from "../services/ToiletService";
 
 const useStyles = makeStyles((theme: Theme) =>
     createStyles({
@@ -18,7 +19,7 @@ const useStyles = makeStyles((theme: Theme) =>
 export default function ToiletOverviewView() {
     const classes = useStyles();
     const [toiletOverviews, setToiletOverviews] = useState<ToiletOverview[]>([]);
-    const toiletService: ToiletService = new RestToiletService();
+    const toiletService: ToiletService = ToiletServiceProvider.getToiletService()
     const locationService: GeoLocationService = new DefaultGeoLocationService();
 
     useEffect(() => {

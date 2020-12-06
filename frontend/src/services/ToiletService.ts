@@ -1,8 +1,29 @@
-import {API_ENDPOINT} from "./ServiceConstants";
 import axios from "axios";
 import {GeoLocation} from "../model/GeoLocation";
 import {ToiletOverview} from "../model/ToiletOverview";
 import {ToiletDetails} from "../model/ToiletDetails";
+
+export class ToiletServiceProvider {
+    private static instance: ToiletService
+
+    private constructor() {
+    }
+
+    public static getToiletService(): ToiletService {
+        console.debug("getToiletService")
+        if (!ToiletServiceProvider.instance) {
+            if (process.env.REACT_APP_DEV_MODE) {
+                console.debug("Creating new mock ToiletService")
+                ToiletServiceProvider.instance = new MockToiletService()
+            } else {
+                console.debug("Creating new rest ToiletService")
+                ToiletServiceProvider.instance = new RestToiletService()
+            }
+        }
+
+        return ToiletServiceProvider.instance
+    }
+}
 
 export interface ToiletService {
     getToilets(geoLocation: GeoLocation, maxDistanceInMeters: number): Promise<ToiletOverview[]>
@@ -10,11 +31,11 @@ export interface ToiletService {
     getToiletDetails(toiletId: string, location: GeoLocation): Promise<ToiletDetails>
 }
 
-export class RestToiletService implements ToiletService {
+class RestToiletService implements ToiletService {
     public getToilets(geoLocation: GeoLocation, maxDistanceInMeters: number): Promise<ToiletOverview[]> {
         return axios
             .get(
-                API_ENDPOINT + `/v1/toilets?` +
+                process.env.REACT_APP_API_ENDPOINT + `/v1/toilets?` +
                 `lon=${geoLocation.lon}` +
                 `&lat=${geoLocation.lat}` +
                 `&maxDistanceInMeters=${maxDistanceInMeters}`
@@ -23,7 +44,7 @@ export class RestToiletService implements ToiletService {
                 const toiletOverviews: ToiletOverview[] = response.data
 
                 toiletOverviews.filter(it => it.previewURL)
-                    .forEach(it => it.previewURL = API_ENDPOINT + it.previewURL)
+                    .forEach(it => it.previewURL = process.env.REACT_APP_API_ENDPOINT + it.previewURL)
 
                 return response.data
             }, error => {
@@ -36,7 +57,7 @@ export class RestToiletService implements ToiletService {
 
         return axios
             .get(
-                API_ENDPOINT + `/v1/toilets/${toiletId}?` +
+                process.env.REACT_APP_API_ENDPOINT + `/v1/toilets/${toiletId}?` +
                 `lon=${location.lon}` +
                 `&lat=${location.lat}`
             )
@@ -44,7 +65,7 @@ export class RestToiletService implements ToiletService {
                 const toiletDetails: ToiletDetails = response.data
 
                 if (toiletDetails.previewURL) {
-                    toiletDetails.previewURL = API_ENDPOINT + toiletDetails.previewURL
+                    toiletDetails.previewURL = process.env.REACT_APP_API_ENDPOINT + toiletDetails.previewURL
                 }
 
                 return response.data
@@ -54,44 +75,62 @@ export class RestToiletService implements ToiletService {
     }
 }
 
-export class MockToiletService implements ToiletService {
+class MockToiletService implements ToiletService {
     public getToilets(geoLocation: GeoLocation, maxDistanceInMeters: number): Promise<ToiletOverview[]> {
         return new Promise<ToiletOverview[]>(function (resolve) {
             const toilets: ToiletOverview[] = [
                 {
                     id: "1",
-                    title: "Beautiful toilet",
-                    distance: 2313.0,
-                    previewURL: "/toilet.jpg",
-                    rating: 4.6,
+                    title: "Toilet 10m",
+                    distance: 10.0,
+                    previewURL: "/mock/toilet1.jpg",
+                    rating: 0,
                     disabled: false,
-                    toiletCrewApproved: true,
+                    toiletCrewApproved: false,
                 },
                 {
                     id: "2",
-                    title: "Dirty toilet",
-                    distance: 893.0,
-                    previewURL: "/toilet2.jpg",
-                    rating: 1.3,
+                    title: "Toilet longer name 100.25m",
+                    distance: 100.25,
+                    previewURL: "/mock/toilet2.jpg",
+                    rating: 1.25,
                     disabled: false,
                     toiletCrewApproved: true,
                 },
                 {
                     id: "3",
-                    title: "Porta Potty",
-                    distance: 7384.2,
-                    previewURL: "/toilet.jpg",
-                    rating: 2.5,
-                    disabled: false,
-                    toiletCrewApproved: true,
+                    title: "Toilet extra long name 1.5km",
+                    distance: 1500.5,
+                    previewURL: "/mock/toilet3.jpg",
+                    rating: 3.5,
+                    disabled: true,
+                    toiletCrewApproved: false,
                 },
                 {
                     id: "4",
-                    title: "Shit Heaven",
-                    distance: 341.12,
-                    previewURL: "/toilet2.jpg",
-                    rating: 2.5,
-                    disabled: false,
+                    title: "Toilet extremly long name that never seems to end 10km",
+                    distance: 10000.75,
+                    previewURL: "/mock/toilet4.jpg",
+                    rating: 4.75,
+                    disabled: true,
+                    toiletCrewApproved: true,
+                },
+                {
+                    id: "5",
+                    title: "Toilet highest rating 100.25km",
+                    distance: 100250.0,
+                    previewURL: "/mock/toilet5.jpg",
+                    rating: 5,
+                    disabled: true,
+                    toiletCrewApproved: true,
+                },
+                {
+                    id: "6",
+                    title: "Toilet without image",
+                    distance: 0.0,
+                    previewURL: "",
+                    rating: 1,
+                    disabled: true,
                     toiletCrewApproved: true,
                 },
             ];
