@@ -75,10 +75,8 @@ export default function ToiletOverviewItem(props: ToiletOverviewItemProps) {
                     <Typography className={classes.cardContentTitle} gutterBottom variant="h5">
                         {getToiletTitle(toiletOverview.title)}
                     </Typography>
-                    <Typography>
-                        <RatingView toiletId={toiletOverview.id} size="S"
-                                    rating={toiletOverview.rating}/>
-                    </Typography>
+                    <RatingView toiletId={toiletOverview.id} size="S"
+                                rating={toiletOverview.rating}/>
                     <Typography>
                         Distance: {getDistance(toiletOverview.distance)}
                     </Typography>
