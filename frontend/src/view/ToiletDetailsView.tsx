@@ -3,10 +3,10 @@ import {useLocation} from "react-router-dom"
 import {createStyles, makeStyles, Theme} from "@material-ui/core/styles";
 import ToiletDetailsItem from "../components/ToiletDetailsItem";
 import {ToiletService, ToiletServiceProvider} from "../services/ToiletService";
-import {DefaultGeoLocationService, GeoLocationService} from "../services/GeoLocationService";
+import {GeoLocationService, GeoLocationServiceProvider} from "../services/GeoLocationService";
 import {EMPTY_DETAILS, ToiletDetails} from "../model/ToiletDetails";
 
-const useStyles = makeStyles((theme: Theme) =>
+const useStyles = makeStyles((_: Theme) =>
     createStyles({
         root: {
             flexGrow: 1,
@@ -22,7 +22,7 @@ export default function ToiletDetailsView() {
     const classes = useStyles();
     const [toiletDetails, setToiletDetails] = useState<ToiletDetails>(EMPTY_DETAILS)
     const location = useLocation<LocationState>()
-    const locationService: GeoLocationService = new DefaultGeoLocationService()
+    const locationService: GeoLocationService = GeoLocationServiceProvider.getGeoLocationService()
     const toiletService: ToiletService = ToiletServiceProvider.getToiletService()
 
     useEffect(() => {

@@ -6,7 +6,7 @@ import {Divider, GridList, GridListTile, IconButton, Snackbar, Typography} from 
 import {Send} from "@material-ui/icons";
 import {Alert, Color} from "@material-ui/lab";
 import {ToiletDetails} from "../model/ToiletDetails";
-import {CommentService, RestCommentService} from "../services/CommentService";
+import {CommentService, CommentServiceProvider} from "../services/CommentService";
 
 const useStyles = makeStyles((theme: Theme) =>
     createStyles({
@@ -53,7 +53,7 @@ export default function Comments(props: CommentsProps) {
     const [comments, setComments] = useState<ToiletComment[]>([]);
     const [newCommentText, setNewCommentText] = useState<string>("")
     const [alert, setAlert] = useState<AlertState>({text: "", show: false, severity: "info"})
-    const commentService: CommentService = new RestCommentService();
+    const commentService: CommentService = CommentServiceProvider.getCommentService()
 
     const updateComment = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         setNewCommentText(e.currentTarget.value)
