@@ -1,19 +1,27 @@
 import {createStyles, makeStyles, Theme} from "@material-ui/core/styles";
-import {Card, CardActionArea, CardContent, CardMedia, Typography} from "@material-ui/core";
+import {Box, Card, CardActionArea, CardContent, CardMedia, Typography} from "@material-ui/core";
 import React from "react";
 import {RatingView} from "./Rating";
-import Box from "@material-ui/core/Box";
 import {useHistory} from "react-router-dom"
 import {ToiletOverview} from "../model/ToiletOverview";
 
-const useStyles = makeStyles((theme: Theme) =>
+const useStyles = makeStyles((_: Theme) =>
     createStyles({
-        root: {
-            minWidth: 345,
+        card: {
+            // display and width make the CardActionArea size equal to the grid item size
+            display: "flex",
+            width: "100%",
         },
-        media: {
-            height: 140,
+        cardMedia: {
+            paddingTop: "56.25%", // 16:9
         },
+        cardContent: {
+            flex: 1,
+            height: "135px"
+        },
+        cardContentTitle: {
+            height: "55px",
+        }
     })
 );
 
@@ -26,13 +34,6 @@ export default function ToiletOverviewItem(props: ToiletOverviewItemProps) {
     const toiletOverview = props.toiletOverview;
     const history = useHistory()
 
-    let distanceStr = toiletOverview.distance.toFixed(0) + "m";
-    if (toiletOverview.distance >= 1000) {
-        distanceStr = (toiletOverview.distance / 1000).toFixed(1) + "km";
-    } else if (toiletOverview.distance < 0) {
-        distanceStr = "-";
-    }
-
     const handleCardClick = () => {
         history.push({
             pathname: `/${toiletOverview.id}`,
@@ -40,28 +41,46 @@ export default function ToiletOverviewItem(props: ToiletOverviewItemProps) {
         })
     };
 
+    const getDistance = (distance: number) => {
+        if (distance >= 1000) {
+            return (distance / 1000).toFixed(1) + "km";
+        } else if (distance < 0) {
+            return "-";
+        } else {
+            return distance.toFixed(0) + "m";
+        }
+    }
+
+    const getToiletTitle = (title: string) => {
+        // if title exceeds title content area then shorten it and display "..." at the end
+        return title.length <= 44 ? title : (title.substr(0, 41) + "...")
+    }
+
     return (
-        <Card className={classes.root}
+        <Card className={classes.card}
               onClick={handleCardClick}
         >
             <CardActionArea>
                 {
-                    toiletOverview.previewURL &&
-                    <CardMedia
-                        className={classes.media}
-                        image={toiletOverview.previewURL}
-                        title={toiletOverview.title}
-                    />
+                    toiletOverview.previewURL
+                        // if image available -> show it
+                        ? <CardMedia className={classes.cardMedia}
+                                     image={toiletOverview.previewURL}
+                                     title={toiletOverview.title}
+                        />
+                        // else -> add empty box to move content to bottom of card
+                        : <Box className={classes.cardMedia}/>
                 }
-                <CardContent>
-                    <Typography gutterBottom variant="h5" component="h2">
-                        <Box display="flex" flex="1" flexDirection="row" justifyContent="center">
-                            {toiletOverview.title}
-                            {<RatingView toiletId={toiletOverview.id} size="XS" rating={toiletOverview.rating}/>}
-                        </Box>
+                <CardContent className={classes.cardContent}>
+                    <Typography className={classes.cardContentTitle} gutterBottom variant="h5">
+                        {getToiletTitle(toiletOverview.title)}
                     </Typography>
-                    <Typography variant="inherit">
-                        Distance: {distanceStr}
+                    <Typography>
+                        <RatingView toiletId={toiletOverview.id} size="S"
+                                    rating={toiletOverview.rating}/>
+                    </Typography>
+                    <Typography>
+                        Distance: {getDistance(toiletOverview.distance)}
                     </Typography>
                 </CardContent>
             </CardActionArea>
