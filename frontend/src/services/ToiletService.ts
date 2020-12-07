@@ -149,7 +149,7 @@ class MockToiletService implements ToiletService {
                     lon: 42,
                 },
                 distance: 2313.0,
-                previewURL: "/toilet.jpg",
+                previewURL: "/mock/toilet1.jpg",
                 rating: 4.6,
                 numComments: 0,
                 disabled: false,
