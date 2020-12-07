@@ -7,13 +7,10 @@ export class GeoLocationServiceProvider {
     }
 
     public static getGeoLocationService(): GeoLocationService {
-        console.debug("getGeoLocationService")
         if (!GeoLocationServiceProvider.instance) {
-            if (process.env.REACT_APP_DEV_MODE) {
-                console.debug("Creating new mock GeoLocationService")
+            if (process.env.REACT_APP_DEV_MODE === "true") {
                 GeoLocationServiceProvider.instance = new MockGeoLocationService()
             } else {
-                console.debug("Creating new default GeoLocationService")
                 GeoLocationServiceProvider.instance = new DefaultGeoLocationService()
             }
         }

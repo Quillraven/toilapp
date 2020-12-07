@@ -9,13 +9,10 @@ export class CommentServiceProvider {
     }
 
     public static getCommentService(): CommentService {
-        console.debug("getCommentService")
         if (!CommentServiceProvider.instance) {
-            if (process.env.REACT_APP_DEV_MODE) {
-                console.debug("Creating new mock CommentService")
+            if (process.env.REACT_APP_DEV_MODE === "true") {
                 CommentServiceProvider.instance = new MockCommentService()
             } else {
-                console.debug("Creating new rest CommentService")
                 CommentServiceProvider.instance = new RestCommentService()
             }
         }

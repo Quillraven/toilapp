@@ -10,13 +10,12 @@ export class ToiletServiceProvider {
     }
 
     public static getToiletService(): ToiletService {
-        console.debug("getToiletService")
         if (!ToiletServiceProvider.instance) {
-            if (process.env.REACT_APP_DEV_MODE) {
-                console.debug("Creating new mock ToiletService")
+            if (process.env.REACT_APP_DEV_MODE === "true") {
+                console.log("1")
                 ToiletServiceProvider.instance = new MockToiletService()
             } else {
-                console.debug("Creating new rest ToiletService")
+                console.log("2")
                 ToiletServiceProvider.instance = new RestToiletService()
             }
         }
