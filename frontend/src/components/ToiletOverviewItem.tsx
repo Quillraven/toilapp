@@ -10,17 +10,27 @@ const useStyles = makeStyles((_: Theme) =>
         card: {
             // display and width make the CardActionArea size equal to the grid item size
             display: "flex",
-            width: "100%",
+            flex: 1,
+        },
+        cardActionArea: {
+            display: "flex",
+            flex: 1,
+            flexDirection: "column",
         },
         cardMedia: {
+            display: "flex",
+            flex: 1,
+            width: "100%", // this is important; otherwise the image is not shown
             paddingTop: "56.25%", // 16:9
         },
         cardContent: {
+            display: "flex",
             flex: 1,
-            height: "135px"
+            flexDirection: "column",
         },
         cardContentTitle: {
-            height: "55px",
+            display: "flex",
+            flex: 1,
         }
     })
 );
@@ -60,7 +70,7 @@ export default function ToiletOverviewItem(props: ToiletOverviewItemProps) {
         <Card className={classes.card}
               onClick={handleCardClick}
         >
-            <CardActionArea>
+            <CardActionArea className={classes.cardActionArea}>
                 {
                     toiletOverview.previewURL
                         // if image available -> show it
