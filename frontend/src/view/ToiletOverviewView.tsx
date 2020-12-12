@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import {createStyles, makeStyles, Theme} from '@material-ui/core/styles';
 import {GeoLocationService, GeoLocationServiceProvider} from '../services/GeoLocationService';
-import {Container, Grid} from "@material-ui/core";
+import {Container, Grid, Grow} from "@material-ui/core";
 import {ToiletOverview} from "../model/ToiletOverview";
 import {ToiletService, ToiletServiceProvider} from "../services/ToiletService";
 import ToiletOverviewItem from "../components/ToiletOverviewItem";
@@ -37,24 +37,30 @@ export default function ToiletOverviewView() {
 
     return (
         <Container className={classes.rootContainer}>
-            <Grid
-                container
-                direction="row"
-                justify="space-evenly" // justify grid items itself
-                alignItems="stretch" // this line together with display:"flex" in grid item makes all items of the same height
-                spacing={2}
+            <Grow
+                in={true}
+                style={{transformOrigin: '0 0 0'}}
+                {...({timeout: 1000})}
             >
-                {
-                    toiletOverviews.map(toiletOverview => (
-                        <Grid item
-                              className={classes.gridItem}
-                              key={`GridItem-${toiletOverview.id}`} xs={12} sm={6} md={4} lg={3}
-                        >
-                            <ToiletOverviewItem toiletOverview={toiletOverview}/>
-                        </Grid>
-                    ))
-                }
-            </Grid>
+                <Grid
+                    container
+                    direction="row"
+                    justify="space-evenly" // justify grid items itself
+                    alignItems="stretch" // this line together with display:"flex" in grid item makes all items of the same height
+                    spacing={2}
+                >
+                    {
+                        toiletOverviews.map(toiletOverview => (
+                            <Grid item
+                                  className={classes.gridItem}
+                                  key={`GridItem-${toiletOverview.id}`} xs={12} sm={6} md={4} lg={3}
+                            >
+                                <ToiletOverviewItem toiletOverview={toiletOverview}/>
+                            </Grid>
+                        ))
+                    }
+                </Grid>
+            </Grow>
         </Container>
     );
 }
