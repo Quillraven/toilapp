@@ -4,6 +4,7 @@ import React from "react";
 import {RatingView} from "./Rating";
 import {useHistory} from "react-router-dom"
 import {ToiletOverview} from "../model/ToiletOverview";
+import {AccessibleForward} from "@material-ui/icons";
 
 const useStyles = makeStyles((_: Theme) =>
     createStyles({
@@ -17,21 +18,45 @@ const useStyles = makeStyles((_: Theme) =>
             flex: 1,
             flexDirection: "column",
         },
+        cardHeader: {
+            display: "flex",
+            flex: 1,
+            width: "100%",
+        },
         cardMedia: {
             display: "flex",
             flex: 1,
             width: "100%", // this is important; otherwise the image is not shown
             paddingTop: "56.25%", // 16:9
         },
+        cardMediaApproval: {
+            position: "absolute",
+            width: "25%",
+            height: "auto",
+            top: 0,
+            right: 0,
+        },
         cardContent: {
             display: "flex",
             flex: 1,
+            width: "100%",
             flexDirection: "column",
         },
         cardContentTitle: {
             display: "flex",
             flex: 1,
-        }
+        },
+        cardContentElse: {
+            display: "flex",
+            flex: 1,
+        },
+        ratingAndDistance: {
+            flex: 1
+        },
+        disabledIcon: {
+            alignSelf: "flex-end",
+            fontSize: 40,
+        },
     })
 );
 
@@ -40,6 +65,7 @@ interface ToiletOverviewItemProps {
 }
 
 export default function ToiletOverviewItem(props: ToiletOverviewItemProps) {
+    const approvalIconUrl = "/approval.png"
     const classes = useStyles();
     const toiletOverview = props.toiletOverview;
     const history = useHistory()
@@ -71,25 +97,36 @@ export default function ToiletOverviewItem(props: ToiletOverviewItemProps) {
               onClick={handleCardClick}
         >
             <CardActionArea className={classes.cardActionArea}>
-                {
-                    toiletOverview.previewURL
-                        // if image available -> show it
-                        ? <CardMedia className={classes.cardMedia}
-                                     image={toiletOverview.previewURL}
-                                     title={toiletOverview.title}
-                        />
-                        // else -> add empty box to move content to bottom of card
-                        : <Box className={classes.cardMedia}/>
-                }
+                <Box className={classes.cardHeader}>
+                    {
+                        toiletOverview.previewURL
+                            // if image available -> show it
+                            ? <CardMedia className={classes.cardMedia}
+                                         image={toiletOverview.previewURL}
+                                         title={toiletOverview.title}
+                            />
+                            // else -> add empty box to move content to bottom of card
+                            : <Box className={classes.cardMedia}/>
+                    }
+                    {
+                        toiletOverview.toiletCrewApproved &&
+                        <img alt="approval" className={classes.cardMediaApproval} src={approvalIconUrl}/>
+                    }
+                </Box>
                 <CardContent className={classes.cardContent}>
                     <Typography className={classes.cardContentTitle} gutterBottom variant="h5">
                         {getToiletTitle(toiletOverview.title)}
                     </Typography>
-                    <RatingView toiletId={toiletOverview.id} size="S"
-                                rating={toiletOverview.rating}/>
-                    <Typography>
-                        Distance: {getDistance(toiletOverview.distance)}
-                    </Typography>
+                    <Box className={classes.cardContentElse}>
+                        <Box className={classes.ratingAndDistance}>
+                            <RatingView toiletId={toiletOverview.id} size="S"
+                                        rating={toiletOverview.rating}/>
+                            <Typography>
+                                Distance: {getDistance(toiletOverview.distance)}
+                            </Typography>
+                        </Box>
+                        {toiletOverview.disabled && <AccessibleForward className={classes.disabledIcon}/>}
+                    </Box>
                 </CardContent>
             </CardActionArea>
         </Card>
