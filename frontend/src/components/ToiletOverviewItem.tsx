@@ -4,6 +4,7 @@ import React from "react";
 import {RatingView} from "./Rating";
 import {useHistory} from "react-router-dom"
 import {ToiletOverview} from "../model/ToiletOverview";
+import {AccessibleForward} from "@material-ui/icons";
 
 const useStyles = makeStyles((_: Theme) =>
     createStyles({
@@ -26,12 +27,24 @@ const useStyles = makeStyles((_: Theme) =>
         cardContent: {
             display: "flex",
             flex: 1,
+            width: "100%",
             flexDirection: "column",
         },
         cardContentTitle: {
             display: "flex",
             flex: 1,
-        }
+        },
+        cardContentElse: {
+            display: "flex",
+            flex: 1,
+        },
+        ratingAndDistance: {
+            flex: 1
+        },
+        disabledIcon: {
+            alignSelf: "flex-end",
+            fontSize: 40,
+        },
     })
 );
 
@@ -85,11 +98,16 @@ export default function ToiletOverviewItem(props: ToiletOverviewItemProps) {
                     <Typography className={classes.cardContentTitle} gutterBottom variant="h5">
                         {getToiletTitle(toiletOverview.title)}
                     </Typography>
-                    <RatingView toiletId={toiletOverview.id} size="S"
-                                rating={toiletOverview.rating}/>
-                    <Typography>
-                        Distance: {getDistance(toiletOverview.distance)}
-                    </Typography>
+                    <Box className={classes.cardContentElse}>
+                        <Box className={classes.ratingAndDistance}>
+                            <RatingView toiletId={toiletOverview.id} size="S"
+                                        rating={toiletOverview.rating}/>
+                            <Typography>
+                                Distance: {getDistance(toiletOverview.distance)}
+                            </Typography>
+                        </Box>
+                        {toiletOverview.disabled && <AccessibleForward className={classes.disabledIcon}/>}
+                    </Box>
                 </CardContent>
             </CardActionArea>
         </Card>
