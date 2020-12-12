@@ -1,10 +1,29 @@
 import {GeoLocation} from "../model/GeoLocation";
 
+export class GeoLocationServiceProvider {
+    private static instance: GeoLocationService
+
+    private constructor() {
+    }
+
+    public static getGeoLocationService(): GeoLocationService {
+        if (!GeoLocationServiceProvider.instance) {
+            if (process.env.REACT_APP_DEV_MODE === "true") {
+                GeoLocationServiceProvider.instance = new MockGeoLocationService()
+            } else {
+                GeoLocationServiceProvider.instance = new DefaultGeoLocationService()
+            }
+        }
+
+        return GeoLocationServiceProvider.instance
+    }
+}
+
 export interface GeoLocationService {
     getGeoLocation(): GeoLocation
 }
 
-export class DefaultGeoLocationService implements GeoLocationService {
+class DefaultGeoLocationService implements GeoLocationService {
     getGeoLocation(): GeoLocation {
         // TODO: on a mobile phone -> Ask the mobile OS for the location
 
@@ -17,5 +36,11 @@ export class DefaultGeoLocationService implements GeoLocationService {
         };
         return geoLoation;
     }
+}
 
+class MockGeoLocationService implements GeoLocationService {
+    getGeoLocation = () => ({
+        lon: 16.0,
+        lat: 47.0
+    })
 }

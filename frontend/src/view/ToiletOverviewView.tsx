@@ -1,16 +1,19 @@
 import React, {useEffect, useState} from 'react';
-import {RestToiletService, ToiletService} from '../services/ToiletService';
 import {createStyles, makeStyles, Theme} from '@material-ui/core/styles';
-import ToiletOverviewItem from "../components/ToiletOverviewItem";
-import {DefaultGeoLocationService, GeoLocationService} from '../services/GeoLocationService';
-import {Grid} from "@material-ui/core";
+import {GeoLocationService, GeoLocationServiceProvider} from '../services/GeoLocationService';
+import {Container, Grid, Grow} from "@material-ui/core";
 import {ToiletOverview} from "../model/ToiletOverview";
+import {ToiletService, ToiletServiceProvider} from "../services/ToiletService";
+import ToiletOverviewItem from "../components/ToiletOverviewItem";
 
-const useStyles = makeStyles((theme: Theme) =>
+const useStyles = makeStyles((_: Theme) =>
     createStyles({
-        root: {
-            flexGrow: 1,
-            padding: "20px"
+        rootContainer: {
+            paddingTop: 16,
+            maxWidth: "lg",
+        },
+        gridItem: {
+            display: "flex", // this line makes every grid item of the same height if the container is set to stretch
         },
     }),
 );
@@ -18,8 +21,8 @@ const useStyles = makeStyles((theme: Theme) =>
 export default function ToiletOverviewView() {
     const classes = useStyles();
     const [toiletOverviews, setToiletOverviews] = useState<ToiletOverview[]>([]);
-    const toiletService: ToiletService = new RestToiletService();
-    const locationService: GeoLocationService = new DefaultGeoLocationService();
+    const toiletService: ToiletService = ToiletServiceProvider.getToiletService()
+    const locationService: GeoLocationService = GeoLocationServiceProvider.getGeoLocationService()
 
     useEffect(() => {
         toiletService
@@ -33,22 +36,31 @@ export default function ToiletOverviewView() {
     }, []);
 
     return (
-        <div className={classes.root}>
-            <Grid
-                container
-                direction="row"
-                justify="center"
-                alignItems="center"
-                spacing={3}>
-                {
-                    toiletOverviews.map(toiletOverview => (
-                        <Grid item key={`GridItem-${toiletOverview.id}`} style={{width: "400px"}}>
-                            <ToiletOverviewItem toiletOverview={toiletOverview}
-                                                key={`OverviewItem-${toiletOverview.id}`}/>
-                        </Grid>
-                    ))
-                }
-            </Grid>
-        </div>
+        <Container className={classes.rootContainer}>
+            <Grow
+                in={true}
+                style={{transformOrigin: '0 0 0'}}
+                {...({timeout: 1000})}
+            >
+                <Grid
+                    container
+                    direction="row"
+                    justify="space-evenly" // justify grid items itself
+                    alignItems="stretch" // this line together with display:"flex" in grid item makes all items of the same height
+                    spacing={2}
+                >
+                    {
+                        toiletOverviews.map(toiletOverview => (
+                            <Grid item
+                                  className={classes.gridItem}
+                                  key={`GridItem-${toiletOverview.id}`} xs={12} sm={6} md={4} lg={3}
+                            >
+                                <ToiletOverviewItem toiletOverview={toiletOverview}/>
+                            </Grid>
+                        ))
+                    }
+                </Grid>
+            </Grow>
+        </Container>
     );
 }

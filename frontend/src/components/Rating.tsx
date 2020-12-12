@@ -7,7 +7,7 @@ export function RatingView(props: { toiletId: string, rating: number, size?: str
     let sizeNum = getSizeNum(size);
 
     return (
-        <Box display="flex" flex={1} flexDirection="row" justifyContent="center">
+        <Box display="flex" flex={1} flexDirection="row" justifyContent="left">
             {[0, 1, 2, 3, 4].map((idx) => (
                 <div style={{width: sizeNum, height: sizeNum}} key={`RatingViewDiv-${props.toiletId}-${idx}`}>
                     <RatingElement rating={props.rating} index={idx}/>
@@ -77,7 +77,7 @@ function RatingElement(props: { rating: number, index: number }) {
     let value = props.rating - props.index;
     if (value < 0.25) {
         iconName = 'poo-empty';
-    } else if (value < 0.75) {
+    } else if (value <= 0.75) {
         iconName = 'poo-half';
     } else {
         iconName = 'poo';
