@@ -29,7 +29,7 @@ const useStyles = makeStyles((theme: Theme) =>
             backgroundColor: theme.palette.background.paper,
         },
         commentGridList: {
-            height: 200,
+            height: 600,
         },
         commentDiv: {
             whiteSpace: "pre-wrap"
@@ -51,9 +51,13 @@ export default function Comments(props: CommentsProps) {
     const classes = useStyles();
     const [comments, setComments] = useState<ToiletComment[]>([]);
     const [newCommentText, setNewCommentText] = useState<string>("")
+    const [numComments, setNumComments] = useState<number>(props.toiletDetails.numComments)
     const [alert, setAlert] = useState<AlertState>({text: "", show: false, severity: "info"})
     const commentService: CommentService = CommentServiceProvider.getCommentService()
     const [isLoading, setIsLoading] = useState<boolean>(true)
+    const [page, setPage] = useState<number>(0)
+    // TODO get amount of comments to load from preferences/device type
+    const numCommentsToLoad = 20
 
     const updateComment = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         setNewCommentText(e.currentTarget.value)
@@ -68,11 +72,38 @@ export default function Comments(props: CommentsProps) {
                     setNewCommentText("")
                     setAlert({text: "Successfully posted comment!", show: true, severity: "success"})
                     setComments([response, ...comments])
+                    setNumComments(numComments + 1)
                 } else {
                     setAlert({text: "Could not post comment!", show: true, severity: "error"})
                 }
             })
     };
+
+    const loadMoreComments = () => {
+        if (!isLoading && comments.length < numComments) {
+            console.log(`Loading comments for page ${page + 1}`)
+            setPage(page + 1)
+            setIsLoading(true)
+            commentService
+                .getComments(props.toiletDetails.id, page + 1, numCommentsToLoad)
+                .then(newComments => {
+                    console.log(`${newComments.length} additional comments loaded. New size '${comments.length + newComments.length}'`)
+                    setComments([...comments, ...newComments])
+                    setIsLoading(false)
+                })
+        }
+    }
+
+    const onCommentsScroll = (event: React.SyntheticEvent) => {
+        if (event.target instanceof Element) {
+            const element: Element = event.target
+            const scrollPercentage = element.scrollTop / (element.scrollHeight - element.clientHeight)
+
+            if (scrollPercentage >= 0.7) {
+                loadMoreComments()
+            }
+        }
+    }
 
     const closeAlert = (event?: React.SyntheticEvent, reason?: string) => {
         if (reason === 'clickaway') {
@@ -84,9 +115,9 @@ export default function Comments(props: CommentsProps) {
     useEffect(() => {
         if (props.toiletDetails.id) {
             setIsLoading(true)
+            setNumComments(props.toiletDetails.numComments)
             commentService
-                //TODO get page, numComments depending on device
-                .getComments(props.toiletDetails.id, 0, 10)
+                .getComments(props.toiletDetails.id, page, numCommentsToLoad)
                 .then(comments => {
                     console.log(`${comments.length} comments loaded`)
                     setComments(comments)
@@ -99,7 +130,7 @@ export default function Comments(props: CommentsProps) {
     return (
         <React.Fragment>
             <div className={classes.header}>
-                <h4>{props.toiletDetails.numComments} Comments</h4>
+                <h4>{numComments} Comments</h4>
                 <Snackbar open={alert.show} autoHideDuration={6000} onClose={closeAlert}>
                     <Alert severity={alert.severity} onClose={closeAlert}>
                         {alert.text}
@@ -129,7 +160,7 @@ export default function Comments(props: CommentsProps) {
                 </form>
             </div>
             <div>
-                <GridList cellHeight="auto" className={classes.commentGridList} cols={1}>
+                <GridList cellHeight="auto" className={classes.commentGridList} cols={1} onScroll={onCommentsScroll}>
                     {
                         comments.map((comment, idx) => (
                             <div className={classes.commentDiv} key={`Comment-${props.toiletDetails.id}-${idx}`}>

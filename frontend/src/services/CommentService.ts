@@ -136,7 +136,7 @@ class MockCommentService implements CommentService {
                                 minute: i,
                                 second: i
                             },
-                            text: longCommentTxt,
+                            text: `${(page * numComments) + i} ${longCommentTxt}`,
                             user: {
                                 id: "userId",
                                 email: "test@gmail.com",
@@ -163,7 +163,7 @@ class MockCommentService implements CommentService {
                         minute: 30,
                         second: 0
                     },
-                    text: "A new comment",
+                    text: text,
                     user: {
                         id: "userId",
                         email: "test@gmail.com",
