@@ -2,7 +2,7 @@ import {createStyles, makeStyles, Theme} from "@material-ui/core/styles";
 import React, {useEffect, useState} from "react";
 import {ToiletComment} from "../model/ToiletComment"
 import TextField from "@material-ui/core/TextField"
-import {Divider, GridList, GridListTile, IconButton, Snackbar, Typography} from "@material-ui/core";
+import {CircularProgress, Divider, GridList, GridListTile, IconButton, Snackbar, Typography} from "@material-ui/core";
 import {Send} from "@material-ui/icons";
 import {Alert, Color} from "@material-ui/lab";
 import {ToiletDetails} from "../model/ToiletDetails";
@@ -53,6 +53,7 @@ export default function Comments(props: CommentsProps) {
     const [newCommentText, setNewCommentText] = useState<string>("")
     const [alert, setAlert] = useState<AlertState>({text: "", show: false, severity: "info"})
     const commentService: CommentService = CommentServiceProvider.getCommentService()
+    const [isLoading, setIsLoading] = useState<boolean>(true)
 
     const updateComment = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         setNewCommentText(e.currentTarget.value)
@@ -82,12 +83,14 @@ export default function Comments(props: CommentsProps) {
 
     useEffect(() => {
         if (props.toiletDetails.id) {
+            setIsLoading(true)
             commentService
                 //TODO get page, numComments depending on device
                 .getComments(props.toiletDetails.id, 0, 10)
                 .then(comments => {
                     console.log(`${comments.length} comments loaded`)
                     setComments(comments)
+                    setIsLoading(false)
                 })
         }
         // eslint-disable-next-line
@@ -159,6 +162,14 @@ export default function Comments(props: CommentsProps) {
                                 {idx !== comments.length - 1 && <Divider/>}
                             </div>
                         ))
+                    }
+                    {isLoading &&
+                    <GridListTile>
+                        <CircularProgress/>
+                        <Typography>
+                            Loading comments...
+                        </Typography>
+                    </GridListTile>
                     }
                 </GridList>
             </div>
