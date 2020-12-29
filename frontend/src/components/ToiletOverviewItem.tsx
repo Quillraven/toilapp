@@ -5,6 +5,7 @@ import {RatingView} from "./Rating";
 import {useHistory} from "react-router-dom"
 import {ToiletOverview} from "../model/ToiletOverview";
 import {AccessibleForward} from "@material-ui/icons";
+import {getDistanceString} from "../services/ToiletService";
 
 const useStyles = makeStyles((_: Theme) =>
     createStyles({
@@ -77,16 +78,6 @@ export default function ToiletOverviewItem(props: ToiletOverviewItemProps) {
         })
     };
 
-    const getDistance = (distance: number) => {
-        if (distance >= 1000) {
-            return (distance / 1000).toFixed(1) + "km";
-        } else if (distance < 0) {
-            return "-";
-        } else {
-            return distance.toFixed(0) + "m";
-        }
-    }
-
     const getToiletTitle = (title: string) => {
         // if title exceeds title content area then shorten it and display "..." at the end
         return title.length <= 44 ? title : (title.substr(0, 41) + "...")
@@ -122,7 +113,7 @@ export default function ToiletOverviewItem(props: ToiletOverviewItemProps) {
                             <RatingView toiletId={toiletOverview.id} size="S"
                                         rating={toiletOverview.rating}/>
                             <Typography>
-                                Distance: {getDistance(toiletOverview.distance)}
+                                Distance: {getDistanceString(toiletOverview.distance)}
                             </Typography>
                         </Box>
                         {toiletOverview.disabled && <AccessibleForward className={classes.disabledIcon}/>}

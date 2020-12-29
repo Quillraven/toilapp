@@ -11,14 +11,13 @@ import {CommentService, CommentServiceProvider} from "../services/CommentService
 const useStyles = makeStyles((theme: Theme) =>
     createStyles({
         header: {
-            h4: {
-                display: "inline-block",
-            }
+            display: "flex",
+            flex: 1,
+            flexDirection: "column",
         },
         addCommentForm: {
             '& > *': {
                 marginLeft: theme.spacing(1),
-                width: '25ch',
                 display: "flex",
             },
         },
@@ -34,7 +33,7 @@ const useStyles = makeStyles((theme: Theme) =>
         },
         commentDiv: {
             whiteSpace: "pre-wrap"
-        }
+        },
     }),
 );
 
@@ -74,7 +73,10 @@ export default function Comments(props: CommentsProps) {
             })
     };
 
-    const closeAlert = () => {
+    const closeAlert = (event?: React.SyntheticEvent, reason?: string) => {
+        if (reason === 'clickaway') {
+            return;
+        }
         setAlert({text: "", show: false, severity: "info"})
     }
 
@@ -95,6 +97,11 @@ export default function Comments(props: CommentsProps) {
         <React.Fragment>
             <div className={classes.header}>
                 <h4>{props.toiletDetails.numComments} Comments</h4>
+                <Snackbar open={alert.show} autoHideDuration={6000} onClose={closeAlert}>
+                    <Alert severity={alert.severity} onClose={closeAlert}>
+                        {alert.text}
+                    </Alert>
+                </Snackbar>
                 <form className={classes.addCommentForm} noValidate autoComplete="off">
                     <TextField
                         id={"Comments-for-" + props.toiletDetails.id}
@@ -103,7 +110,7 @@ export default function Comments(props: CommentsProps) {
                         multiline
                         onChange={updateComment}
                         InputProps={{
-                            endAdornment: (
+                            startAdornment: (
                                 <IconButton
                                     aria-label="send"
                                     onClick={postComment}
@@ -154,11 +161,6 @@ export default function Comments(props: CommentsProps) {
                         ))
                     }
                 </GridList>
-                <Snackbar open={alert.show} autoHideDuration={6000} onClose={closeAlert}>
-                    <Alert severity={alert.severity} onClose={closeAlert}>
-                        {alert.text}
-                    </Alert>
-                </Snackbar>
             </div>
         </React.Fragment>
     );

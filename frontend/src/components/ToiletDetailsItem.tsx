@@ -1,49 +1,88 @@
-import {Divider, Grid, Typography} from "@material-ui/core";
+import {Box, createStyles, Divider, Grid, Typography} from "@material-ui/core";
 import React from "react";
 import {RatingView} from "./Rating";
-import Comments from "./Comments";
 import {ToiletDetails} from "../model/ToiletDetails";
+import {getDistanceString} from "../services/ToiletService";
+import {makeStyles, Theme} from "@material-ui/core/styles";
+import {AccessibleForward} from "@material-ui/icons";
+import Comments from "./Comments";
+
+const userStyles = makeStyles((theme: Theme) =>
+    createStyles({
+        gridItem: {
+            margin: theme.spacing(1),
+        },
+        image: {
+            paddingTop: "6px",
+            display: "block",
+            marginLeft: "auto",
+            marginRight: "auto",
+            maxWidth: "100%",
+            height: "auto",
+            borderRadius: "42px",
+        },
+        title: {
+            display: "flex",
+            flex: 1,
+        },
+        toiletInfoBox: {
+            display: "flex",
+            flex: 1,
+        },
+        ratingAndDistance: {
+            flex: 0
+        },
+        disabledIcon: {
+            alignSelf: "flex-end",
+            fontSize: 40,
+            marginLeft: "42px",
+        },
+        dividerDescription: {
+            marginTop: "12px",
+            marginBottom: "12px",
+        },
+    })
+)
 
 interface ToiletDetailsItemProps {
     toiletDetails: ToiletDetails
 }
 
 export default function ToiletDetailsItem(props: ToiletDetailsItemProps) {
+    const classes = userStyles();
     const toiletDetails = props.toiletDetails;
 
-    let distanceStr = toiletDetails.distance.toFixed(0) + "m";
-    if (toiletDetails.distance >= 1000) {
-        distanceStr = (toiletDetails.distance / 1000).toFixed(1) + "km";
-    } else if (toiletDetails.distance < 0) {
-        distanceStr = "-";
-    }
-
     return (
-        <React.Fragment>
-            <Grid container justify="flex-start">
-                <Grid item
-                      xs={12} sm={12} md={12} lg={6} xl={6}
-                      style={{maxWidth: "100%"}}>
-                    <img src={toiletDetails.previewURL} alt={toiletDetails.title} style={{width: "100%"}}/>
-                </Grid>
-                <Grid item
-                      xs={12} sm={12} md={12} lg={6} xl={6}
-                      style={{padding: "20px"}}>
-                    <Typography gutterBottom variant="h3" component="h2" align="center">
-                        {toiletDetails.title}
-                    </Typography>
-                    <RatingView toiletId={toiletDetails.id} size="S" rating={toiletDetails.rating}/>
-                    <Typography variant="inherit">
-                        Distance: {distanceStr}
-                    </Typography>
-                    <Typography>
-                        {toiletDetails.description}
-                    </Typography>
-                    <br/>
-                    <Divider variant="middle"/>
-                    <Comments toiletDetails={toiletDetails}/>
-                </Grid>
+        <Grid
+            container
+            direction="row"
+            justify="flex-start"
+            alignItems="flex-start"
+        >
+            <Grid item xs={12} sm={6} md={4} lg={3} className={classes.gridItem}>
+                <img className={classes.image} src={toiletDetails.previewURL} alt={toiletDetails.title}/>
+                <Typography className={classes.title} gutterBottom variant="h3">
+                    {toiletDetails.title}
+                </Typography>
+                <Box className={classes.toiletInfoBox}>
+                    <Box className={classes.ratingAndDistance}>
+                        <RatingView toiletId={toiletDetails.id} size="S"
+                                    rating={toiletDetails.rating}/>
+                        <Typography>
+                            Distance: {getDistanceString(toiletDetails.distance)}
+                        </Typography>
+                    </Box>
+                    {toiletDetails.disabled && <AccessibleForward className={classes.disabledIcon}/>}
+                </Box>
+                <Divider className={classes.dividerDescription} variant="fullWidth"/>
+                <Typography>
+                    {toiletDetails.description}
+                </Typography>
+                <Divider className={classes.dividerDescription} variant="fullWidth"/>
             </Grid>
-        </React.Fragment>
+            <Grid item xs={12} sm={6} md={4} lg={3} className={classes.gridItem}>
+                {<Comments toiletDetails={toiletDetails}/>}
+            </Grid>
+        </Grid>
     )
 }
