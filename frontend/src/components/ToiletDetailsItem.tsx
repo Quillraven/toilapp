@@ -6,6 +6,7 @@ import {getDistanceString} from "../services/ToiletService";
 import {makeStyles, Theme} from "@material-ui/core/styles";
 import {AccessibleForward} from "@material-ui/icons";
 import Comments from "./Comments";
+import UserRating from "./UserRating";
 
 const useStyles = makeStyles((theme: Theme) =>
     createStyles({
@@ -81,7 +82,8 @@ export default function ToiletDetailsItem(props: ToiletDetailsItemProps) {
                 <Divider className={classes.dividerDescription} variant="fullWidth"/>
             </Grid>
             <Grid item xs={12} md={5} className={classes.gridItem}>
-                {<Comments toiletDetails={toiletDetails}/>}
+                <UserRating toiletId={toiletDetails.id}/>
+                <Comments toiletDetails={toiletDetails}/>
             </Grid>
         </Grid>
     )
