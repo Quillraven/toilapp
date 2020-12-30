@@ -1,5 +1,5 @@
 import {createStyles, makeStyles, Theme} from "@material-ui/core/styles";
-import React, {useEffect, useState} from "react";
+import React, {useEffect, useRef, useState} from "react";
 import {ToiletComment} from "../model/ToiletComment"
 import TextField from "@material-ui/core/TextField"
 import {CircularProgress, Divider, GridList, GridListTile, IconButton, Snackbar, Typography} from "@material-ui/core";
@@ -55,7 +55,7 @@ export default function Comments(props: CommentsProps) {
     const [alert, setAlert] = useState<AlertState>({text: "", show: false, severity: "info"})
     const commentService: CommentService = CommentServiceProvider.getCommentService()
     const [isLoading, setIsLoading] = useState<boolean>(true)
-    const [page, setPage] = useState<number>(0)
+    const pageRef = useRef(0)
     // TODO get amount of comments to load from preferences/device type
     const numCommentsToLoad = 20
 
@@ -71,8 +71,8 @@ export default function Comments(props: CommentsProps) {
                     console.log(`Comment ${JSON.stringify(response)} posted`)
                     setNewCommentText("")
                     setAlert({text: "Successfully posted comment!", show: true, severity: "success"})
-                    setComments([response, ...comments])
-                    setNumComments(numComments + 1)
+                    setComments(prevComments => [response, ...prevComments])
+                    setNumComments(prevNumComments => prevNumComments + 1)
                 } else {
                     setAlert({text: "Could not post comment!", show: true, severity: "error"})
                 }
@@ -81,14 +81,20 @@ export default function Comments(props: CommentsProps) {
 
     const loadMoreComments = () => {
         if (!isLoading && comments.length < numComments) {
-            console.log(`Loading comments for page ${page + 1}`)
-            setPage(page + 1)
+            ++pageRef.current
+            console.log(`Loading comments for page ${pageRef.current}`)
             setIsLoading(true)
             commentService
-                .getComments(props.toiletDetails.id, page + 1, numCommentsToLoad)
+                .getComments(props.toiletDetails.id, pageRef.current, numCommentsToLoad)
                 .then(newComments => {
-                    console.log(`${newComments.length} additional comments loaded. New size '${comments.length + newComments.length}'`)
-                    setComments([...comments, ...newComments])
+
+                    setComments(
+                        prevComments => {
+                            const newValue = [...prevComments, ...newComments]
+                            console.log(`${newComments.length} additional comments loaded. New size '${newValue.length}'`)
+                            return newValue
+                        }
+                    )
                     setIsLoading(false)
                 })
         }
@@ -109,7 +115,9 @@ export default function Comments(props: CommentsProps) {
         if (reason === 'clickaway') {
             return;
         }
-        setAlert({text: "", show: false, severity: "info"})
+        setAlert(prevAlert => {
+            return {...prevAlert, show: false}
+        })
     }
 
     useEffect(() => {
@@ -117,9 +125,9 @@ export default function Comments(props: CommentsProps) {
             setIsLoading(true)
             setNumComments(props.toiletDetails.numComments)
             commentService
-                .getComments(props.toiletDetails.id, page, numCommentsToLoad)
+                .getComments(props.toiletDetails.id, pageRef.current, numCommentsToLoad)
                 .then(comments => {
-                    console.log(`${comments.length} comments loaded`)
+                    console.log(`${comments.length} comments loaded for page '${pageRef.current}'`)
                     setComments(comments)
                     setIsLoading(false)
                 })
