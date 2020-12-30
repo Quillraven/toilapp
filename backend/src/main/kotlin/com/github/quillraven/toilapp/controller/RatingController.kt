@@ -4,11 +4,13 @@ import com.github.quillraven.toilapp.model.dto.CreateUpdateRatingDto
 import com.github.quillraven.toilapp.service.RatingService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.web.bind.annotation.DeleteMapping
+import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
@@ -19,6 +21,10 @@ class RatingController(
     @PostMapping
     fun create(@RequestBody createUpdateRatingDto: CreateUpdateRatingDto) =
         ratingService.create(createUpdateRatingDto)
+
+    @GetMapping
+    fun getUserRating(@RequestParam(required = true) toiletId: String) =
+        ratingService.getUserRating(toiletId)
 
     @PutMapping
     fun update(@RequestBody createUpdateRatingDto: CreateUpdateRatingDto) =
