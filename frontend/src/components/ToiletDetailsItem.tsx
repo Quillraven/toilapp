@@ -7,7 +7,7 @@ import {makeStyles, Theme} from "@material-ui/core/styles";
 import {AccessibleForward} from "@material-ui/icons";
 import Comments from "./Comments";
 
-const userStyles = makeStyles((theme: Theme) =>
+const useStyles = makeStyles((theme: Theme) =>
     createStyles({
         gridItem: {
             margin: theme.spacing(1),
@@ -49,7 +49,7 @@ interface ToiletDetailsItemProps {
 }
 
 export default function ToiletDetailsItem(props: ToiletDetailsItemProps) {
-    const classes = userStyles();
+    const classes = useStyles();
     const toiletDetails = props.toiletDetails;
 
     return (
