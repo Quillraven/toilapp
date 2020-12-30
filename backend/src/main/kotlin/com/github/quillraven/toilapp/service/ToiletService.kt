@@ -137,7 +137,7 @@ class DefaultToiletService(
                 val numComments = it.t4
                 val distanceInfo = it.t5
 
-                toilet.createToiletDetailsDto(distanceInfo.distance * 1000, previewUrl, rating, numComments)
+                toilet.createToiletDetailsDto(distanceInfo.distance, previewUrl, rating, numComments)
             }
     }
 
