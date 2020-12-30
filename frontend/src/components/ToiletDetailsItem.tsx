@@ -59,7 +59,7 @@ export default function ToiletDetailsItem(props: ToiletDetailsItemProps) {
             justify="flex-start"
             alignItems="flex-start"
         >
-            <Grid item xs={12} sm={6} md={4} lg={3} className={classes.gridItem}>
+            <Grid item xs={12} md={4} className={classes.gridItem}>
                 <img className={classes.image} src={toiletDetails.previewURL} alt={toiletDetails.title}/>
                 <Typography className={classes.title} gutterBottom variant="h3">
                     {toiletDetails.title}
@@ -80,7 +80,7 @@ export default function ToiletDetailsItem(props: ToiletDetailsItemProps) {
                 </Typography>
                 <Divider className={classes.dividerDescription} variant="fullWidth"/>
             </Grid>
-            <Grid item xs={12} sm={6} md={4} lg={3} className={classes.gridItem}>
+            <Grid item xs={12} md={5} className={classes.gridItem}>
                 {<Comments toiletDetails={toiletDetails}/>}
             </Grid>
         </Grid>
