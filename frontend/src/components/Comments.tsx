@@ -129,8 +129,7 @@ export default function Comments(props: CommentsProps) {
                     setIsLoading(false)
                 })
         }
-        // eslint-disable-next-line
-    }, [props.toiletDetails]);
+    }, [props.toiletDetails, commentService]);
 
     return (
         <React.Fragment>

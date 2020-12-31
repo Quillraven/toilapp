@@ -32,8 +32,7 @@ export default function ToiletDetailsView() {
                 console.log(`Toilet details loaded: ${JSON.stringify(toiletDetails)}`)
                 setToiletDetails(toiletDetails)
             })
-        // eslint-disable-next-line
-    }, []);
+    }, [toiletService, locationService, location.state.toiletId]);
 
     return (
         <div className={classes.root}>

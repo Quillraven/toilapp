@@ -73,8 +73,7 @@ export default function UserRating(props: UserRatingProps) {
                     }
                 )
         }
-        // eslint-disable-next-line
-    }, [props.toiletId])
+    }, [props.toiletId, ratingService])
 
     return (
         <Box className={classes.userRatingBox}>
