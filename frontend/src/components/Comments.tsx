@@ -15,12 +15,6 @@ const useStyles = makeStyles((theme: Theme) =>
             flex: 1,
             flexDirection: "column",
         },
-        addCommentForm: {
-            '& > *': {
-                marginLeft: theme.spacing(1),
-                display: "flex",
-            },
-        },
         commentGridListDiv: {
             display: "flex",
             flexWrap: "wrap",
@@ -33,6 +27,9 @@ const useStyles = makeStyles((theme: Theme) =>
         },
         commentDiv: {
             whiteSpace: "pre-wrap"
+        },
+        enterComment: {
+            marginBottom: theme.spacing(2),
         },
     }),
 );
@@ -144,28 +141,26 @@ export default function Comments(props: CommentsProps) {
                         {alert.text}
                     </Alert>
                 </Snackbar>
-                <form className={classes.addCommentForm} noValidate autoComplete="off">
-                    <TextField
-                        id={"Comments-for-" + props.toiletDetails.id}
-                        placeholder="Add Comment"
-                        value={newCommentText}
-                        multiline
-                        onChange={updateComment}
-                        InputProps={{
-                            startAdornment: (
-                                <IconButton
-                                    aria-label="send"
-                                    onClick={postComment}
-                                    disabled={!newCommentText}
-                                    color="primary"
-                                >
-                                    <Send/>
-                                </IconButton>
-                            )
-                        }}
-                    />
-                    <br/>
-                </form>
+                <TextField
+                    className={classes.enterComment}
+                    id={"Comments-for-" + props.toiletDetails.id}
+                    placeholder="Add Comment"
+                    value={newCommentText}
+                    multiline
+                    onChange={updateComment}
+                    InputProps={{
+                        startAdornment: (
+                            <IconButton
+                                aria-label="send"
+                                onClick={postComment}
+                                disabled={!newCommentText}
+                                color="primary"
+                            >
+                                <Send/>
+                            </IconButton>
+                        )
+                    }}
+                />
             </div>
             <div>
                 <GridList cellHeight="auto" className={classes.commentGridList} cols={1} onScroll={onCommentsScroll}>
