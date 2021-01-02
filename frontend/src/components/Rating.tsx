@@ -1,10 +1,10 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 import Box from '@material-ui/core/Box';
 
-export function RatingView(props: { toiletId: string, rating: number, size?: string }) {
-    let size = props.size ? props.size : 'M';
-    size = ['XS', 'S', 'M', 'L'].includes(size) ? size : 'M';
-    let sizeNum = getSizeNum(size);
+export type RatingSizes = "XS" | "S" | "M" | "L"
+
+export function RatingView(props: { toiletId: string, rating: number, size?: RatingSizes }) {
+    const sizeNum = getSizeNum(props.size ? props.size : 'M');
 
     return (
         <Box display="flex" flex={1} flexDirection="row" justifyContent="left">
@@ -18,26 +18,34 @@ export function RatingView(props: { toiletId: string, rating: number, size?: str
 
 }
 
-export function RatingSelect(props: { toiletId: string, rating?: number, size?: string, onRatingChange: (rating: number) => void }) {
-    let size = props.size ? props.size : 'M';
-    size = ['XS', 'S', 'M', 'L'].includes(size) ? size : 'M';
-    let sizeNum = getSizeNum(size);
+export function RatingSelect(props: { toiletId: string, rating?: number, size?: RatingSizes, onRatingChange: (rating: number) => void }) {
+    const sizeNum = getSizeNum(props.size ? props.size : 'M');
+    const rating = props.rating ? props.rating : 0
 
-    const lockedRatingRef = React.useRef(props.rating ? props.rating : 0)
-    const [displayRating, setDisplayRating] = React.useState(props.rating ? props.rating : 0)
+    const lockedRatingRef = React.useRef(rating)
+    const [displayRating, setDisplayRating] = React.useState(rating)
+
+    useEffect(() => {
+        console.log(`Updating RatingSelect value to '${rating}'`)
+        lockedRatingRef.current = rating
+        setDisplayRating(lockedRatingRef.current)
+    }, [rating])
+
     const ratingLocked = (ratingIdx: number) => {
         lockedRatingRef.current = ratingIdx + 1
         props.onRatingChange(lockedRatingRef.current);
     };
+
     const mouseEnter = (ratingIdx: number) => {
         setDisplayRating(ratingIdx + 1)
     }
+
     const mouseExit = () => {
         setDisplayRating(lockedRatingRef.current)
     }
 
     return (
-        <Box display="flex" flex="1" flexDirection="row" justifyContent="center">
+        <Box display="flex" flex="1" flexDirection="row" justifyContent="left">
             {[0, 1, 2, 3, 4].map((idx) => (
                 <div style={{width: sizeNum, height: sizeNum}}
                      onClick={() => ratingLocked(idx)}
@@ -52,7 +60,7 @@ export function RatingSelect(props: { toiletId: string, rating?: number, size?: 
     );
 }
 
-function getSizeNum(size: string): number {
+function getSizeNum(size: RatingSizes): number {
     switch (size) {
         case 'XS': {
             return 18

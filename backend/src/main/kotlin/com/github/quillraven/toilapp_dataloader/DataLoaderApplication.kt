@@ -29,6 +29,7 @@ import org.springframework.data.mongodb.repository.config.EnableReactiveMongoRep
 import org.springframework.http.MediaType
 import org.springframework.stereotype.Component
 import reactor.core.publisher.Flux
+import reactor.core.publisher.Mono
 import reactor.util.function.Tuples
 import kotlin.random.Random
 import kotlin.system.exitProcess
@@ -167,18 +168,32 @@ class DataLoaderRunner(
             )
         }
 
-    private fun createRatings(users: List<User>, toilets: MutableList<Toilet>) = Flux.range(0, numRatings)
-        .flatMap {
-            LOG.debug("Creating rating $it")
-            ratingRepository.save(
-                Rating(
-                    id = ObjectId(),
-                    toiletId = toilets.random().id,
-                    userRef = users.random().id,
-                    value = Random.nextInt(1, 6)
-                )
-            )
-        }
+    private fun createRatings(users: List<User>, toilets: MutableList<Toilet>): Flux<Rating> {
+        val ratings = HashMap<ObjectId, MutableSet<ObjectId>>()
+
+        return Flux.range(0, numRatings)
+            .flatMap {
+                LOG.debug("Creating rating $it")
+
+                // rating per toilet and user must be unique
+                val toiletId = toilets.random().id
+                val userId = users.random().id
+                val usersWithRating = ratings.computeIfAbsent(toiletId) { HashSet() }
+                if (usersWithRating.add(userId)) {
+                    ratingRepository.save(
+                        Rating(
+                            id = ObjectId(),
+                            toiletId = toiletId,
+                            userRef = userId,
+                            value = Random.nextInt(1, 6)
+                        )
+                    )
+                } else {
+                    // user already voted -> ignore it
+                    Mono.empty()
+                }
+            }
+    }
 
     override fun run(vararg args: String?) {
         createUsers()

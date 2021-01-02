@@ -22,6 +22,16 @@ export class ToiletServiceProvider {
     }
 }
 
+export function getDistanceString(distance: number) {
+    if (distance >= 1000) {
+        return (distance / 1000).toFixed(1) + "km";
+    } else if (distance < 0) {
+        return "-";
+    } else {
+        return distance.toFixed(0) + "m";
+    }
+}
+
 export interface ToiletService {
     getToilets(geoLocation: GeoLocation, maxDistanceInMeters: number): Promise<ToiletOverview[]>
 
@@ -148,8 +158,8 @@ class MockToiletService implements ToiletService {
                 distance: 2313.0,
                 previewURL: "/mock/toilet1.jpg",
                 rating: 4.6,
-                numComments: 0,
-                disabled: false,
+                numComments: 100,
+                disabled: true,
                 toiletCrewApproved: true,
             }
             resolve(toiletDetails)

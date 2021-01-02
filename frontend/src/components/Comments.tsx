@@ -1,8 +1,8 @@
 import {createStyles, makeStyles, Theme} from "@material-ui/core/styles";
-import React, {useEffect, useState} from "react";
+import React, {useEffect, useRef, useState} from "react";
 import {ToiletComment} from "../model/ToiletComment"
 import TextField from "@material-ui/core/TextField"
-import {Divider, GridList, GridListTile, IconButton, Snackbar, Typography} from "@material-ui/core";
+import {CircularProgress, Divider, GridList, GridListTile, IconButton, Snackbar, Typography} from "@material-ui/core";
 import {Send} from "@material-ui/icons";
 import {Alert, Color} from "@material-ui/lab";
 import {ToiletDetails} from "../model/ToiletDetails";
@@ -11,16 +11,9 @@ import {CommentService, CommentServiceProvider} from "../services/CommentService
 const useStyles = makeStyles((theme: Theme) =>
     createStyles({
         header: {
-            h4: {
-                display: "inline-block",
-            }
-        },
-        addCommentForm: {
-            '& > *': {
-                marginLeft: theme.spacing(1),
-                width: '25ch',
-                display: "flex",
-            },
+            display: "flex",
+            flex: 1,
+            flexDirection: "column",
         },
         commentGridListDiv: {
             display: "flex",
@@ -30,11 +23,14 @@ const useStyles = makeStyles((theme: Theme) =>
             backgroundColor: theme.palette.background.paper,
         },
         commentGridList: {
-            height: 200,
+            height: 600,
         },
         commentDiv: {
             whiteSpace: "pre-wrap"
-        }
+        },
+        enterComment: {
+            marginBottom: theme.spacing(2),
+        },
     }),
 );
 
@@ -52,8 +48,13 @@ export default function Comments(props: CommentsProps) {
     const classes = useStyles();
     const [comments, setComments] = useState<ToiletComment[]>([]);
     const [newCommentText, setNewCommentText] = useState<string>("")
+    const [numComments, setNumComments] = useState<number>(props.toiletDetails.numComments)
     const [alert, setAlert] = useState<AlertState>({text: "", show: false, severity: "info"})
     const commentService: CommentService = CommentServiceProvider.getCommentService()
+    const [isLoading, setIsLoading] = useState<boolean>(true)
+    const pageRef = useRef(0)
+    // TODO get amount of comments to load from preferences/device type
+    const numCommentsToLoad = 20
 
     const updateComment = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         setNewCommentText(e.currentTarget.value)
@@ -67,59 +68,101 @@ export default function Comments(props: CommentsProps) {
                     console.log(`Comment ${JSON.stringify(response)} posted`)
                     setNewCommentText("")
                     setAlert({text: "Successfully posted comment!", show: true, severity: "success"})
-                    setComments([response, ...comments])
+                    setComments(prevComments => [response, ...prevComments])
+                    setNumComments(prevNumComments => prevNumComments + 1)
                 } else {
                     setAlert({text: "Could not post comment!", show: true, severity: "error"})
                 }
             })
     };
 
-    const closeAlert = () => {
-        setAlert({text: "", show: false, severity: "info"})
+    const loadMoreComments = () => {
+        if (!isLoading && comments.length < numComments) {
+            ++pageRef.current
+            console.log(`Loading comments for page ${pageRef.current}`)
+            setIsLoading(true)
+            commentService
+                .getComments(props.toiletDetails.id, pageRef.current, numCommentsToLoad)
+                .then(newComments => {
+
+                    setComments(
+                        prevComments => {
+                            const newValue = [...prevComments, ...newComments]
+                            console.log(`${newComments.length} additional comments loaded. New size '${newValue.length}'`)
+                            return newValue
+                        }
+                    )
+                    setIsLoading(false)
+                })
+        }
+    }
+
+    const onCommentsScroll = (event: React.SyntheticEvent) => {
+        if (event.target instanceof Element) {
+            const element: Element = event.target
+            const scrollPercentage = element.scrollTop / (element.scrollHeight - element.clientHeight)
+
+            if (scrollPercentage >= 0.7) {
+                loadMoreComments()
+            }
+        }
+    }
+
+    const closeAlert = (event?: React.SyntheticEvent, reason?: string) => {
+        if (reason === 'clickaway') {
+            return;
+        }
+        setAlert(prevAlert => {
+            return {...prevAlert, show: false}
+        })
     }
 
     useEffect(() => {
         if (props.toiletDetails.id) {
+            setIsLoading(true)
+            setNumComments(props.toiletDetails.numComments)
             commentService
-                //TODO get page, numComments depending on device
-                .getComments(props.toiletDetails.id, 0, 10)
+                .getComments(props.toiletDetails.id, pageRef.current, numCommentsToLoad)
                 .then(comments => {
-                    console.log(`${comments.length} comments loaded`)
+                    console.log(`${comments.length} comments loaded for page '${pageRef.current}'`)
                     setComments(comments)
+                    setIsLoading(false)
                 })
         }
-        // eslint-disable-next-line
-    }, [props.toiletDetails]);
+    }, [props.toiletDetails, commentService]);
 
     return (
         <React.Fragment>
             <div className={classes.header}>
-                <h4>{props.toiletDetails.numComments} Comments</h4>
-                <form className={classes.addCommentForm} noValidate autoComplete="off">
-                    <TextField
-                        id={"Comments-for-" + props.toiletDetails.id}
-                        placeholder="Add Comment"
-                        value={newCommentText}
-                        multiline
-                        onChange={updateComment}
-                        InputProps={{
-                            endAdornment: (
-                                <IconButton
-                                    aria-label="send"
-                                    onClick={postComment}
-                                    disabled={!newCommentText}
-                                    color="primary"
-                                >
-                                    <Send/>
-                                </IconButton>
-                            )
-                        }}
-                    />
-                    <br/>
-                </form>
+                <h4>{numComments} Comments</h4>
+                <Snackbar open={alert.show} autoHideDuration={6000} onClose={closeAlert}>
+                    <Alert severity={alert.severity} onClose={closeAlert}>
+                        {alert.text}
+                    </Alert>
+                </Snackbar>
+                <TextField
+                    className={classes.enterComment}
+                    id={"Comments-for-" + props.toiletDetails.id}
+                    placeholder="Add Comment"
+                    value={newCommentText}
+                    multiline
+                    onChange={updateComment}
+                    InputProps={{
+                        startAdornment: (
+                            <IconButton
+                                aria-label="send"
+                                onClick={postComment}
+                                disabled={!newCommentText}
+                                color="primary"
+                            >
+                                <Send/>
+                            </IconButton>
+                        )
+                    }}
+                />
             </div>
             <div>
-                <GridList cellHeight="auto" className={classes.commentGridList} cols={1}>
+                <GridList cellHeight="auto" className={classes.commentGridList} cols={1} onScroll={onCommentsScroll}>
                     {
                         comments.map((comment, idx) => (
                             <div className={classes.commentDiv} key={`Comment-${props.toiletDetails.id}-${idx}`}>
@@ -153,12 +196,15 @@ export default function Comments(props: CommentsProps) {
                             </div>
                         ))
                     }
+                    {isLoading &&
+                    <GridListTile>
+                        <CircularProgress/>
+                        <Typography>
+                            Loading comments...
+                        </Typography>
+                    </GridListTile>
+                    }
                 </GridList>
-                <Snackbar open={alert.show} autoHideDuration={6000} onClose={closeAlert}>
-                    <Alert severity={alert.severity} onClose={closeAlert}>
-                        {alert.text}
-                    </Alert>
-                </Snackbar>
             </div>
         </React.Fragment>
     );

@@ -32,8 +32,7 @@ export default function ToiletOverviewView() {
                 console.log("Toilet data loaded")
                 setToiletOverviews(toiletOverviews)
             })
-        // eslint-disable-next-line
-    }, []);
+    }, [toiletService, locationService]);
 
     return (
         <Container className={classes.rootContainer}>

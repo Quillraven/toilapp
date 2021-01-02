@@ -16,6 +16,7 @@ import reactor.core.publisher.Mono
 
 @Repository
 interface RatingRepository : ReactiveMongoRepository<Rating, ObjectId>, CustomRatingRepository {
+    fun getByToiletIdAndUserRef(toiletId: ObjectId, userRef: ObjectId): Mono<Rating>
     fun deleteByToiletId(toiletId: ObjectId): Mono<Void>
 }
 

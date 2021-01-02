@@ -1,7 +1,7 @@
 import {createStyles, makeStyles, Theme} from "@material-ui/core/styles";
 import AppBar from "@material-ui/core/AppBar";
 import {IconButton, Menu, MenuItem, Toolbar, Typography} from "@material-ui/core";
-import React from "react";
+import React, {useEffect} from "react";
 import {AccountCircle} from "@material-ui/icons";
 import MenuIcon from "@material-ui/icons/Menu";
 import ArrowBack from "@material-ui/icons/ArrowBack";
@@ -53,11 +53,17 @@ export default function NavigationBar() {
             <MenuItem onClick={handleMenuClose}>My account</MenuItem>
         </Menu>
     );
+
     const hist = useHistory();
-    hist.listen((location: any, action: any) => {
+    hist.listen(() => {
         setLocation(hist.location.pathname);
     });
-    console.log("hist location", hist.location);
+
+    useEffect(() => {
+        console.log("hist location", hist.location);
+        setLocation(hist.location.pathname)
+    }, [hist.location])
+
     return (
         <div className={classes.grow}>
             <AppBar position="fixed">

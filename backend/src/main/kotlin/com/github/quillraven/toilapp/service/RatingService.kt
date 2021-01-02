@@ -20,6 +20,7 @@ interface RatingService {
     fun create(createUpdateRatingDto: CreateUpdateRatingDto): Mono<RatingDto>
     fun update(createUpdateRatingDto: CreateUpdateRatingDto): Mono<RatingDto>
     fun getAverageRating(toilet: Toilet): Mono<Double>
+    fun getUserRating(toiletId: String): Mono<RatingDto>
     fun delete(id: String): Mono<Void>
     fun deleteByToiletId(toiletId: ObjectId): Mono<Void>
 }
@@ -103,6 +104,26 @@ class DefaultRatingService(
         LOG.debug("getAverageRating: (toilet=$toilet)")
 
         return ratingRepository.getAverageRating(toilet)
+    }
+
+    override fun getUserRating(toiletId: String): Mono<RatingDto> {
+        LOG.debug("getUserRating: (toiletId=$toiletId)")
+
+        return when {
+            !ObjectId.isValid(toiletId) -> Mono.error(InvalidIdException(toiletId))
+            else -> {
+                userService.getCurrentUser()
+                    .flatMap { userDto ->
+                        Mono.zip(
+                            Mono.just(userDto),
+                            ratingRepository.getByToiletIdAndUserRef(ObjectId(toiletId), ObjectId(userDto.id))
+                        )
+                    }
+                    .map { tuple ->
+                        tuple.t2.createRatingDto(tuple.t1)
+                    }
+            }
+        }
     }
 
     override fun delete(id: String): Mono<Void> {
