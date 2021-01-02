@@ -2,6 +2,7 @@ import axios from "axios";
 import {GeoLocation} from "../model/GeoLocation";
 import {ToiletOverview} from "../model/ToiletOverview";
 import {ToiletDetails} from "../model/ToiletDetails";
+import {CreateUpdateToilet} from "../model/CreateUpdateToilet";
 
 export class ToiletServiceProvider {
     private static instance: ToiletService
@@ -33,12 +34,96 @@ export function getDistanceString(distance: number) {
 }
 
 export interface ToiletService {
+    createUpdateToilet(
+        title: string,
+        location: GeoLocation,
+        disabled: boolean,
+        description?: string,
+        toiletId?: string,
+    ): Promise<ToiletDetails>
+
+    updatePreviewImage(toiletId: string, image: File): Promise<string>
+
     getToilets(geoLocation: GeoLocation, maxDistanceInMeters: number): Promise<ToiletOverview[]>
 
     getToiletDetails(toiletId: string, location: GeoLocation): Promise<ToiletDetails>
 }
 
 class RestToiletService implements ToiletService {
+    createUpdateToilet(
+        title: string,
+        location: GeoLocation,
+        disabled: boolean,
+        description?: string,
+        toiletId?: string
+    ): Promise<ToiletDetails> {
+        const body = {
+            id: toiletId,
+            title: title,
+            description: description,
+            location: {
+                type: "Point",
+                coordinates: [
+                    location.lon,
+                    location.lat
+                ],
+            },
+            disabled: disabled,
+            toiletCrewApproved: false,
+        } as CreateUpdateToilet
+
+        if (toiletId) {
+            return axios
+                .put(process.env.REACT_APP_API_ENDPOINT + `/v1/toilets`, body)
+                .then(response => {
+                    const toiletDetails: ToiletDetails = response.data
+
+                    if (toiletDetails.previewURL) {
+                        toiletDetails.previewURL = process.env.REACT_APP_API_ENDPOINT + toiletDetails.previewURL
+                    }
+
+                    return response.data
+                }, error => {
+                    console.error(`Could not update toilet '${toiletId}'. Error=${error}`)
+                })
+        } else {
+            return axios
+                .post(process.env.REACT_APP_API_ENDPOINT + `/v1/toilets`, body)
+                .then(response => {
+                    const toiletDetails: ToiletDetails = response.data
+
+                    if (toiletDetails.previewURL) {
+                        toiletDetails.previewURL = process.env.REACT_APP_API_ENDPOINT + toiletDetails.previewURL
+                    }
+
+                    return response.data
+                }, error => {
+                    console.error(`Could not create new toilet. Error=${error}`)
+                })
+        }
+    }
+
+    updatePreviewImage(toiletId: string, image: File): Promise<string> {
+        const formData = new FormData()
+        formData.append("file", image)
+
+        return axios
+            .put(
+                process.env.REACT_APP_API_ENDPOINT + `/v1/images/preview?toiletId=${toiletId}`,
+                formData,
+                {
+                    headers: {
+                        "Content-Type": "multipart/form-data"
+                    }
+                }
+            )
+            .then(response => {
+                return response.data
+            }, error => {
+                console.error(`Could not update preview for toilet '${toiletId}'. Error=${error}`)
+            })
+    }
+
     public getToilets(geoLocation: GeoLocation, maxDistanceInMeters: number): Promise<ToiletOverview[]> {
         return axios
             .get(
@@ -83,6 +168,36 @@ class RestToiletService implements ToiletService {
 }
 
 class MockToiletService implements ToiletService {
+    createUpdateToilet(
+        title: string,
+        location: GeoLocation,
+        disabled: boolean,
+        description?: string,
+        toiletId?: string
+    ): Promise<ToiletDetails> {
+        return new Promise<ToiletDetails>(function (resolve) {
+            const toiletDetails: ToiletDetails = {
+                id: toiletId ? toiletId : "42",
+                title: title,
+                description: description ? description : "",
+                location: location,
+                distance: 1337.0,
+                previewURL: "/mock/toilet1.jpg",
+                rating: 3,
+                numComments: 0,
+                disabled: disabled,
+                toiletCrewApproved: false,
+            }
+            resolve(toiletDetails)
+        })
+    }
+
+    updatePreviewImage(toiletId: string, image: File): Promise<string> {
+        return new Promise<string>(function (resolve) {
+            resolve("42")
+        })
+    }
+
     public getToilets(geoLocation: GeoLocation, maxDistanceInMeters: number): Promise<ToiletOverview[]> {
         return new Promise<ToiletOverview[]>(function (resolve) {
             const toilets: ToiletOverview[] = [
