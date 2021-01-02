@@ -13,6 +13,7 @@ const useStyles = makeStyles((_: Theme) =>
             // display and width make the CardActionArea size equal to the grid item size
             display: "flex",
             flex: 1,
+            borderRadius: "20px",
         },
         cardActionArea: {
             display: "flex",
