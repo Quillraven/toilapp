@@ -60,50 +60,39 @@ export default function Comments(props: CommentsProps) {
         setNewCommentText(e.currentTarget.value)
     }
 
-    const postComment = () => {
-        commentService
-            .postComment(props.toiletDetails.id, newCommentText)
-            .then(response => {
-                if (response) {
-                    console.log(`Comment ${JSON.stringify(response)} posted`)
-                    setNewCommentText("")
-                    setAlert({text: "Successfully posted comment!", show: true, severity: "success"})
-                    setComments(prevComments => [response, ...prevComments])
-                    setNumComments(prevNumComments => prevNumComments + 1)
-                } else {
-                    setAlert({text: "Could not post comment!", show: true, severity: "error"})
-                }
-            })
-    };
-
-    const loadMoreComments = () => {
-        if (!isLoading && comments.length < numComments) {
-            ++pageRef.current
-            console.log(`Loading comments for page ${pageRef.current}`)
-            setIsLoading(true)
-            commentService
-                .getComments(props.toiletDetails.id, pageRef.current, numCommentsToLoad)
-                .then(newComments => {
-
-                    setComments(
-                        prevComments => {
-                            const newValue = [...prevComments, ...newComments]
-                            console.log(`${newComments.length} additional comments loaded. New size '${newValue.length}'`)
-                            return newValue
-                        }
-                    )
-                    setIsLoading(false)
-                })
+    const postComment = async () => {
+        try {
+            const toiletComment = await commentService.postComment(props.toiletDetails.id, newCommentText)
+            console.log(`Comment ${JSON.stringify(toiletComment)} posted`)
+            setNewCommentText("")
+            setAlert({text: "Successfully posted comment!", show: true, severity: "success"})
+            setComments(prevComments => [toiletComment, ...prevComments])
+            setNumComments(prevNumComments => prevNumComments + 1)
+        } catch (error) {
+            setAlert({text: "Could not post comment!", show: true, severity: "error"})
         }
-    }
+    };
 
     const onCommentsScroll = (event: React.SyntheticEvent) => {
         if (event.target instanceof Element) {
             const element: Element = event.target
             const scrollPercentage = element.scrollTop / (element.scrollHeight - element.clientHeight)
 
-            if (scrollPercentage >= 0.7) {
-                loadMoreComments()
+            if (scrollPercentage >= 0.7 && !isLoading && comments.length < numComments) {
+                (async () => {
+                    ++pageRef.current
+                    console.log(`Loading comments for page ${pageRef.current}`)
+                    setIsLoading(true)
+                    const toiletComments = await commentService.getComments(props.toiletDetails.id, pageRef.current, numCommentsToLoad)
+                    setComments(
+                        prevComments => {
+                            const newValue = [...prevComments, ...toiletComments]
+                            console.log(`${toiletComments.length} additional comments loaded. New size '${newValue.length}'`)
+                            return newValue
+                        }
+                    )
+                    setIsLoading(false)
+                })()
             }
         }
     }
@@ -119,15 +108,14 @@ export default function Comments(props: CommentsProps) {
 
     useEffect(() => {
         if (props.toiletDetails.id) {
-            setIsLoading(true)
-            setNumComments(props.toiletDetails.numComments)
-            commentService
-                .getComments(props.toiletDetails.id, pageRef.current, numCommentsToLoad)
-                .then(comments => {
-                    console.log(`${comments.length} comments loaded for page '${pageRef.current}'`)
-                    setComments(comments)
-                    setIsLoading(false)
-                })
+            (async () => {
+                setIsLoading(true)
+                setNumComments(props.toiletDetails.numComments)
+                const toiletComments = await commentService.getComments(props.toiletDetails.id, pageRef.current, numCommentsToLoad)
+                console.log(`${toiletComments.length} comments loaded for page '${pageRef.current}'`)
+                setComments(toiletComments)
+                setIsLoading(false)
+            })()
         }
     }, [props.toiletDetails, commentService]);
 

@@ -45,13 +45,12 @@ export default function ToiletOverviewView() {
     }
 
     useEffect(() => {
-        toiletService
+        (async () => {
             //TODO get maxDistanceInMeters from current user preferences
-            .getToilets(locationService.getGeoLocation(), 4000000)
-            .then(toiletOverviews => {
-                console.log("Toilet data loaded")
-                setToiletOverviews(toiletOverviews)
-            })
+            const overviews = await toiletService.getToilets(locationService.getGeoLocation(), 4000000)
+            console.log("Toilet data loaded")
+            setToiletOverviews(overviews)
+        })()
     }, [toiletService, locationService]);
 
     return (

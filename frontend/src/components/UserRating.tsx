@@ -35,20 +35,11 @@ export default function UserRating(props: UserRatingProps) {
     const [ratingRef, setRatingRef] = useState({ratingId: "", rating: 0} as UserRatingRef)
     const [showAlert, setShowAlert] = useState(false)
 
-    const ratingChanged = (newValue: number) => {
-        ratingService
-            .createUpdateRating(
-                props.toiletId,
-                newValue,
-                ratingRef.ratingId
-            ).then(response => {
-                if (response) {
-                    console.log(`Updated user rating to value '${response.value}'`)
-                    setRatingRef({ratingId: response.id, rating: response.value})
-                    setShowAlert(true)
-                }
-            }
-        )
+    const ratingChanged = async (newValue: number) => {
+        const newRating = await ratingService.createUpdateRating(props.toiletId, newValue, ratingRef.ratingId)
+        console.log(`Updated user rating to value '${newRating.value}'`)
+        setRatingRef({ratingId: newRating.id, rating: newRating.value})
+        setShowAlert(true)
     }
 
     const closeAlert = (event?: React.SyntheticEvent, reason?: string) => {
@@ -61,17 +52,15 @@ export default function UserRating(props: UserRatingProps) {
 
     useEffect(() => {
         if (props.toiletId) {
-            ratingService
-                .getUserRating(props.toiletId)
-                .then(response => {
-                        if (response) {
-                            console.log(`Found user rating of value '${response.value}'`)
-                            setRatingRef({ratingId: response.id, rating: response.value})
-                        } else {
-                            console.log(`There is no user rating for toilet '${props.toiletId}'`)
-                        }
-                    }
-                )
+            (async () => {
+                const currUserRating = await ratingService.getUserRating(props.toiletId)
+                if (currUserRating) {
+                    console.log(`Found user rating of value '${currUserRating.value}'`)
+                    setRatingRef({ratingId: currUserRating.id, rating: currUserRating.value})
+                } else {
+                    console.log(`There is no user rating for toilet '${props.toiletId}'`)
+                }
+            })()
         }
     }, [props.toiletId, ratingService])
 

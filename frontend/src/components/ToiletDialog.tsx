@@ -94,32 +94,21 @@ export const ToiletDialog = forwardRef<ToiletDialogRef, ToiletDialogProps>((prop
         return title.length > 0 && location.lat !== EMPTY_LOCATION && location.lon !== EMPTY_LOCATION
     }
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         if (validateInput()) {
-            toiletService
-                .createUpdateToilet(
-                    title,
-                    location,
-                    disabled,
-                    description
-                )
-                .then(response => {
-                        if (response) {
-                            console.log(`Successfully created toilet '${response.id}'`)
-                            if (thumbnail) {
-                                toiletService
-                                    .updatePreviewImage(response.id, thumbnail)
-                                    .then(response => {
-                                        if (response) {
-                                            console.log(`Successfully updated preview`)
-                                        }
-                                    })
-                            }
-                            props.dispatchAlert(true)
-                            handleClose()
-                        }
-                    }
-                )
+            const toiletDetails = await toiletService.createUpdateToilet(
+                title,
+                location,
+                disabled,
+                description
+            )
+            console.log(`Successfully created toilet '${toiletDetails.id}'`)
+            if (thumbnail) {
+                const imageId = await toiletService.updatePreviewImage(toiletDetails.id, thumbnail)
+                console.log(`Successfully updated preview '${imageId}'`)
+            }
+            props.dispatchAlert(true)
+            handleClose()
         }
     }
 

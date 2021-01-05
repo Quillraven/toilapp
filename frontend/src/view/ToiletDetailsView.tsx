@@ -26,12 +26,11 @@ export default function ToiletDetailsView() {
     const toiletService: ToiletService = ToiletServiceProvider.getToiletService()
 
     useEffect(() => {
-        toiletService
-            .getToiletDetails(location.state.toiletId, locationService.getGeoLocation())
-            .then(toiletDetails => {
-                console.log(`Toilet details loaded: ${JSON.stringify(toiletDetails)}`)
-                setToiletDetails(toiletDetails)
-            })
+        (async () => {
+            const details = await toiletService.getToiletDetails(location.state.toiletId, locationService.getGeoLocation())
+            console.log(`Toilet details loaded: ${JSON.stringify(details)}`)
+            setToiletDetails(details)
+        })()
     }, [toiletService, locationService, location.state.toiletId]);
 
     return (
