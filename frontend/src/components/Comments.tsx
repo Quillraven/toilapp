@@ -23,7 +23,7 @@ const useStyles = makeStyles((theme: Theme) =>
             backgroundColor: theme.palette.background.paper,
         },
         commentGridList: {
-            height: 600,
+            maxHeight: 600,
         },
         commentDiv: {
             whiteSpace: "pre-wrap"
@@ -69,6 +69,7 @@ export default function Comments(props: CommentsProps) {
             setComments(prevComments => [toiletComment, ...prevComments])
             setNumComments(prevNumComments => prevNumComments + 1)
         } catch (error) {
+            console.error(`Could not post comment: error=${error}`)
             setAlert({text: "Could not post comment!", show: true, severity: "error"})
         }
     };
@@ -83,14 +84,18 @@ export default function Comments(props: CommentsProps) {
                     ++pageRef.current
                     console.log(`Loading comments for page ${pageRef.current}`)
                     setIsLoading(true)
-                    const toiletComments = await commentService.getComments(props.toiletDetails.id, pageRef.current, numCommentsToLoad)
-                    setComments(
-                        prevComments => {
-                            const newValue = [...prevComments, ...toiletComments]
-                            console.log(`${toiletComments.length} additional comments loaded. New size '${newValue.length}'`)
-                            return newValue
-                        }
-                    )
+                    try {
+                        const toiletComments = await commentService.getComments(props.toiletDetails.id, pageRef.current, numCommentsToLoad)
+                        setComments(
+                            prevComments => {
+                                const newValue = [...prevComments, ...toiletComments]
+                                console.log(`${toiletComments.length} additional comments loaded. New size '${newValue.length}'`)
+                                return newValue
+                            }
+                        )
+                    } catch (error) {
+                        console.error(`Could not load additional comments: error=${error}`)
+                    }
                     setIsLoading(false)
                 })()
             }
@@ -110,10 +115,15 @@ export default function Comments(props: CommentsProps) {
         if (props.toiletDetails.id) {
             (async () => {
                 setIsLoading(true)
-                setNumComments(props.toiletDetails.numComments)
-                const toiletComments = await commentService.getComments(props.toiletDetails.id, pageRef.current, numCommentsToLoad)
-                console.log(`${toiletComments.length} comments loaded for page '${pageRef.current}'`)
-                setComments(toiletComments)
+                try {
+                    const toiletComments = await commentService.getComments(props.toiletDetails.id, pageRef.current, numCommentsToLoad)
+                    console.log(`${toiletComments.length} comments loaded for page '${pageRef.current}'`)
+                    setComments(toiletComments)
+                    setNumComments(props.toiletDetails.numComments)
+                } catch (error) {
+                    console.error(`Could not load comments: error=${error}`)
+                    setNumComments(0)
+                }
                 setIsLoading(false)
             })()
         }
