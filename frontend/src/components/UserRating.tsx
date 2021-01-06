@@ -2,7 +2,7 @@ import {Box, createStyles, Snackbar, Typography} from "@material-ui/core";
 import {makeStyles, Theme} from "@material-ui/core/styles";
 import {RatingSelect} from "./Rating";
 import {RatingServiceProvider} from "../services/RatingService";
-import React, {useEffect, useState} from "react";
+import React, {useEffect, useRef, useState} from "react";
 import {Alert} from "@material-ui/lab";
 
 const useStyles = makeStyles((theme: Theme) =>
@@ -34,12 +34,19 @@ export default function UserRating(props: UserRatingProps) {
     const ratingService = RatingServiceProvider.getRatingService()
     const [ratingRef, setRatingRef] = useState({ratingId: "", rating: 0} as UserRatingRef)
     const [showAlert, setShowAlert] = useState(false)
+    const canRate = useRef(true)
 
     const ratingChanged = async (newValue: number) => {
-        const newRating = await ratingService.createUpdateRating(props.toiletId, newValue, ratingRef.ratingId)
-        console.log(`Updated user rating to value '${newRating.value}'`)
-        setRatingRef({ratingId: newRating.id, rating: newRating.value})
-        setShowAlert(true)
+        if (canRate.current) {
+            try {
+                const newRating = await ratingService.createUpdateRating(props.toiletId, newValue, ratingRef.ratingId)
+                console.log(`Updated user rating to value '${newRating.value}'`)
+                setRatingRef({ratingId: newRating.id, rating: newRating.value})
+                setShowAlert(true)
+            } catch (error) {
+                console.error(`Error when submitting new rating. Error=${error}`)
+            }
+        }
     }
 
     const closeAlert = (event?: React.SyntheticEvent, reason?: string) => {
@@ -53,12 +60,18 @@ export default function UserRating(props: UserRatingProps) {
     useEffect(() => {
         if (props.toiletId) {
             (async () => {
-                const currUserRating = await ratingService.getUserRating(props.toiletId)
-                if (currUserRating) {
-                    console.log(`Found user rating of value '${currUserRating.value}'`)
-                    setRatingRef({ratingId: currUserRating.id, rating: currUserRating.value})
-                } else {
-                    console.log(`There is no user rating for toilet '${props.toiletId}'`)
+                try {
+                    const currUserRating = await ratingService.getUserRating(props.toiletId)
+                    if (currUserRating) {
+                        console.log(`Found user rating of value '${currUserRating.value}'`)
+                        setRatingRef({ratingId: currUserRating.id, rating: currUserRating.value})
+                    } else {
+                        console.log(`There is no user rating for toilet '${props.toiletId}'`)
+                    }
+                    canRate.current = true
+                } catch (error) {
+                    canRate.current = false
+                    console.error(`Error when getting user rating: error=${error}`)
                 }
             })()
         }
