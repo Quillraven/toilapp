@@ -7,6 +7,7 @@ import {makeStyles, Theme} from "@material-ui/core/styles";
 import {AccessibleForward} from "@material-ui/icons";
 import Comments from "./Comments";
 import UserRating from "./UserRating";
+import axios from "axios";
 
 const useStyles = makeStyles((theme: Theme) =>
     createStyles({
@@ -61,7 +62,11 @@ export default function ToiletDetailsItem(props: ToiletDetailsItemProps) {
             alignItems="flex-start"
         >
             <Grid item xs={12} md={4} className={classes.gridItem}>
-                <img className={classes.image} src={toiletDetails.previewURL} alt={toiletDetails.title}/>
+                {
+                    toiletDetails.previewURL &&
+                    <img className={classes.image} src={axios.defaults.baseURL + toiletDetails.previewURL}
+                         alt={toiletDetails.title}/>
+                }
                 <Typography className={classes.title} gutterBottom variant="h3">
                     {toiletDetails.title}
                 </Typography>
