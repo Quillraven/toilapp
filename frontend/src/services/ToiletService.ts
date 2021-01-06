@@ -3,12 +3,10 @@ import {GeoLocation} from "../model/GeoLocation";
 import {ToiletOverview} from "../model/ToiletOverview";
 import {ToiletDetails} from "../model/ToiletDetails";
 import {CreateUpdateToilet} from "../model/CreateUpdateToilet";
+import {errorPromise} from "./ServiceUtils";
 
-export class ToiletServiceProvider {
+export abstract class ToiletServiceProvider {
     private static instance: ToiletService
-
-    private constructor() {
-    }
 
     public static getToiletService(): ToiletService {
         if (!ToiletServiceProvider.instance) {
@@ -50,66 +48,46 @@ export interface ToiletService {
 }
 
 class RestToiletService implements ToiletService {
-    createUpdateToilet(
+    async createUpdateToilet(
         title: string,
         location: GeoLocation,
         disabled: boolean,
         description?: string,
         toiletId?: string
     ): Promise<ToiletDetails> {
-        const body = {
-            id: toiletId,
-            title: title,
-            description: description,
-            location: {
-                type: "Point",
-                coordinates: [
-                    location.lon,
-                    location.lat
-                ],
-            },
-            disabled: disabled,
-            toiletCrewApproved: false,
-        } as CreateUpdateToilet
-
-        if (toiletId) {
-            return axios
-                .put(process.env.REACT_APP_API_ENDPOINT + `/v1/toilets`, body)
-                .then(response => {
-                    const toiletDetails: ToiletDetails = response.data
-
-                    if (toiletDetails.previewURL) {
-                        toiletDetails.previewURL = process.env.REACT_APP_API_ENDPOINT + toiletDetails.previewURL
-                    }
-
-                    return response.data
-                }, error => {
-                    console.error(`Could not update toilet '${toiletId}'. Error=${error}`)
-                })
-        } else {
-            return axios
-                .post(process.env.REACT_APP_API_ENDPOINT + `/v1/toilets`, body)
-                .then(response => {
-                    const toiletDetails: ToiletDetails = response.data
-
-                    if (toiletDetails.previewURL) {
-                        toiletDetails.previewURL = process.env.REACT_APP_API_ENDPOINT + toiletDetails.previewURL
-                    }
-
-                    return response.data
-                }, error => {
-                    console.error(`Could not create new toilet. Error=${error}`)
-                })
+        try {
+            const response = await axios(
+                {
+                    method: toiletId ? "PUT" : "POST",
+                    url: `/v1/toilets`,
+                    data: {
+                        id: toiletId,
+                        title: title,
+                        description: description,
+                        location: {
+                            type: "Point",
+                            coordinates: [
+                                location.lon,
+                                location.lat
+                            ],
+                        },
+                        disabled: disabled,
+                        toiletCrewApproved: false,
+                    } as CreateUpdateToilet,
+                }
+            )
+            return Promise.resolve(response.data)
+        } catch (error) {
+            return errorPromise(error, "Error during createUpdateToilet")
         }
     }
 
-    updatePreviewImage(toiletId: string, image: File): Promise<string> {
-        const formData = new FormData()
-        formData.append("file", image)
-
-        return axios
-            .put(
-                process.env.REACT_APP_API_ENDPOINT + `/v1/images/preview?toiletId=${toiletId}`,
+    async updatePreviewImage(toiletId: string, image: File): Promise<string> {
+        try {
+            const formData = new FormData()
+            formData.append("file", image)
+            const response = await axios.put(
+                `/v1/images/preview?toiletId=${toiletId}`,
                 formData,
                 {
                     headers: {
@@ -117,53 +95,29 @@ class RestToiletService implements ToiletService {
                     }
                 }
             )
-            .then(response => {
-                return response.data
-            }, error => {
-                console.error(`Could not update preview for toilet '${toiletId}'. Error=${error}`)
-            })
+            return Promise.resolve(response.data)
+        } catch (error) {
+            return errorPromise(error, "Error during updatePreviewImage")
+        }
     }
 
-    public getToilets(geoLocation: GeoLocation, maxDistanceInMeters: number): Promise<ToiletOverview[]> {
-        return axios
-            .get(
-                process.env.REACT_APP_API_ENDPOINT + `/v1/toilets?` +
-                `lon=${geoLocation.lon}` +
-                `&lat=${geoLocation.lat}` +
-                `&maxDistanceInMeters=${maxDistanceInMeters}`
-            )
-            .then(response => {
-                const toiletOverviews: ToiletOverview[] = response.data
-
-                toiletOverviews.filter(it => it.previewURL)
-                    .forEach(it => it.previewURL = process.env.REACT_APP_API_ENDPOINT + it.previewURL)
-
-                return response.data
-            }, error => {
-                console.error(`Could not load toilets. Error=${error}`)
-            })
+    async getToilets(geoLocation: GeoLocation, maxDistanceInMeters: number): Promise<ToiletOverview[]> {
+        try {
+            const response = await axios.get(`/v1/toilets?lon=${geoLocation.lon}&lat=${geoLocation.lat}&maxDistanceInMeters=${maxDistanceInMeters}`)
+            return Promise.resolve(response.data)
+        } catch (error) {
+            return errorPromise(error, "Error during getToilets")
+        }
     }
 
-    public getToiletDetails(toiletId: string, location: GeoLocation): Promise<ToiletDetails> {
+    async getToiletDetails(toiletId: string, location: GeoLocation): Promise<ToiletDetails> {
         console.log(`getToiletDetails for '${toiletId}'`)
-
-        return axios
-            .get(
-                process.env.REACT_APP_API_ENDPOINT + `/v1/toilets/${toiletId}?` +
-                `lon=${location.lon}` +
-                `&lat=${location.lat}`
-            )
-            .then(response => {
-                const toiletDetails: ToiletDetails = response.data
-
-                if (toiletDetails.previewURL) {
-                    toiletDetails.previewURL = process.env.REACT_APP_API_ENDPOINT + toiletDetails.previewURL
-                }
-
-                return response.data
-            }, error => {
-                console.error(`Could not load toilet details for '${toiletId}'. Error=${error}`)
-            })
+        try {
+            const response = await axios.get(`/v1/toilets/${toiletId}?lon=${location.lon}&lat=${location.lat}`)
+            return Promise.resolve(response.data)
+        } catch (error) {
+            return errorPromise(error, "Error during getToiletDetails")
+        }
     }
 }
 
