@@ -1,7 +1,7 @@
 import React, {createRef, useEffect, useState} from 'react';
 import {createStyles, makeStyles, Theme} from '@material-ui/core/styles';
 import {GeoLocationService, GeoLocationServiceProvider} from '../services/GeoLocationService';
-import {Container, Fab, Grid, Grow, Snackbar} from "@material-ui/core";
+import {CircularProgress, Container, Fab, Grid, Grow, Snackbar, Typography} from "@material-ui/core";
 import {ToiletOverview} from "../model/ToiletOverview";
 import {ToiletService, ToiletServiceProvider} from "../services/ToiletService";
 import ToiletOverviewItem from "../components/ToiletOverviewItem";
@@ -34,6 +34,7 @@ export default function ToiletOverviewView() {
     const locationService: GeoLocationService = GeoLocationServiceProvider.getGeoLocationService()
     const [toiletOverviews, setToiletOverviews] = useState<ToiletOverview[]>([]);
     const [showAlert, setShowAlert] = useState(false)
+    const [isLoading, setIsLoading] = useState(false)
     const dialogRef = createRef<ToiletDialogRef>()
 
     const closeAlert = (event?: React.SyntheticEvent, reason?: string) => {
@@ -46,6 +47,7 @@ export default function ToiletOverviewView() {
 
     useEffect(() => {
         (async () => {
+            setIsLoading(true)
             try {
                 //TODO get maxDistanceInMeters from current user preferences
                 const overviews = await toiletService.getToilets(locationService.getGeoLocation(), 4000000)
@@ -54,6 +56,7 @@ export default function ToiletOverviewView() {
             } catch (error) {
                 console.error(`Error while loading toilet data: ${error}`)
             }
+            setIsLoading(false)
         })()
     }, [toiletService, locationService]);
 
@@ -83,6 +86,14 @@ export default function ToiletOverviewView() {
                     }
                 </Grid>
             </Grow>
+            {isLoading &&
+            <div>
+                <CircularProgress/>
+                <Typography>
+                    Loading nearby toilets...
+                </Typography>
+            </div>
+            }
             <ToiletDialog ref={dialogRef} title="Create new toilet" dispatchAlert={setShowAlert}/>
             <Fab className={classes.dialogButton} color="primary">
                 <Add onClick={() => {
