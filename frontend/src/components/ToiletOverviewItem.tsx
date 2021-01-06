@@ -6,6 +6,7 @@ import {useHistory} from "react-router-dom"
 import {ToiletOverview} from "../model/ToiletOverview";
 import {AccessibleForward} from "@material-ui/icons";
 import {getDistanceString} from "../services/ToiletService";
+import axios from "axios";
 
 const useStyles = makeStyles((_: Theme) =>
     createStyles({
@@ -94,7 +95,7 @@ export default function ToiletOverviewItem(props: ToiletOverviewItemProps) {
                         toiletOverview.previewURL
                             // if image available -> show it
                             ? <CardMedia className={classes.cardMedia}
-                                         image={toiletOverview.previewURL}
+                                         image={axios.defaults.baseURL + toiletOverview.previewURL}
                                          title={toiletOverview.title}
                             />
                             // else -> add empty box to move content to bottom of card
