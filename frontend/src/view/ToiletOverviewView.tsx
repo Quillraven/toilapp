@@ -46,10 +46,14 @@ export default function ToiletOverviewView() {
 
     useEffect(() => {
         (async () => {
-            //TODO get maxDistanceInMeters from current user preferences
-            const overviews = await toiletService.getToilets(locationService.getGeoLocation(), 4000000)
-            console.log("Toilet data loaded")
-            setToiletOverviews(overviews)
+            try {
+                //TODO get maxDistanceInMeters from current user preferences
+                const overviews = await toiletService.getToilets(locationService.getGeoLocation(), 4000000)
+                console.log("Toilet data loaded")
+                setToiletOverviews(overviews)
+            } catch (error) {
+                console.error(`Error while loading toilet data: ${error}`)
+            }
         })()
     }, [toiletService, locationService]);
 
