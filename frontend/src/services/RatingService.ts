@@ -1,12 +1,10 @@
 import axios from "axios";
 import {Rating} from "../model/Rating";
 import {CreateUpdateRating} from "../model/CreateUpdateRating";
+import {errorPromise} from "./ServiceUtils";
 
-export class RatingServiceProvider {
+export abstract class RatingServiceProvider {
     private static instance: RatingService
-
-    private constructor() {
-    }
 
     public static getRatingService(): RatingService {
         if (!RatingServiceProvider.instance) {
@@ -28,51 +26,35 @@ export interface RatingService {
 }
 
 class RestRatingService implements RatingService {
-    public getUserRating(toiletId: string): Promise<Rating> {
+    async getUserRating(toiletId: string): Promise<Rating> {
         console.log(`getUserRating for toilet '${toiletId}'`)
 
-        return axios
-            .get(process.env.REACT_APP_API_ENDPOINT + `/v1/ratings?toiletId=${toiletId}`)
-            .then(response => {
-                return response.data
-            }, error => {
-                console.error(`Could not get rating for toilet '${toiletId}'. Error=${error}`)
-            })
+        try {
+            const response = await axios.get(`/v1/ratings?toiletId=${toiletId}`)
+            return Promise.resolve(response.data)
+        } catch (error) {
+            return errorPromise(error, "Error during getUserRating")
+        }
     }
 
-    public createUpdateRating(toiletId: string, rating: number, ratingId?: string): Promise<Rating> {
+    async createUpdateRating(toiletId: string, rating: number, ratingId?: string): Promise<Rating> {
         console.log(`createUpdateRating for toilet '${toiletId}': (rating='${rating}', ratingId='${ratingId}')`)
 
-        if (ratingId) {
-            return axios
-                .put(
-                    process.env.REACT_APP_API_ENDPOINT + `/v1/ratings`,
-                    {
+        try {
+            const response = await axios(
+                {
+                    method: ratingId ? "PUT" : "POST",
+                    url: `/v1/ratings`,
+                    data: {
                         ratingId: ratingId,
                         toiletId: toiletId,
                         value: rating,
-                    } as CreateUpdateRating
-                )
-                .then(response => {
-                    return response.data
-                }, error => {
-                    console.error(`Could not update rating '${ratingId}' for toilet '${toiletId}'. Error=${error}`)
-                })
-        } else {
-            return axios
-                .post(
-                    process.env.REACT_APP_API_ENDPOINT + `/v1/ratings`,
-                    {
-                        ratingId: ratingId,
-                        toiletId: toiletId,
-                        value: rating,
-                    } as CreateUpdateRating
-                )
-                .then(response => {
-                    return response.data
-                }, error => {
-                    console.error(`Could not create rating for toilet '${toiletId}'. Error=${error}`)
-                })
+                    } as CreateUpdateRating,
+                }
+            )
+            return Promise.resolve(response.data)
+        } catch (error) {
+            return errorPromise(error, "Error during createUpdateRating")
         }
     }
 }

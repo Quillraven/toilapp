@@ -93,7 +93,7 @@ class DefaultToiletService(
 
         return toiletRepository
             .findByLocationNear(Point(lon, lat), Distance(maxDistanceInMeters / 1000, Metrics.KILOMETERS))
-            .flatMap { geoResult ->
+            .flatMapSequential { geoResult ->
                 val toilet = geoResult.content
 
                 Mono.zip(

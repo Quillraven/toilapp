@@ -4,6 +4,10 @@ import App from './App';
 import {Router} from "react-router-dom"
 import {createBrowserHistory} from "history"
 import * as serviceWorker from './serviceWorker';
+import axios from "axios";
+
+// configure default API endpoint for axios calls
+axios.defaults.baseURL = process.env.REACT_APP_API_ENDPOINT
 
 const history = createBrowserHistory()
 
