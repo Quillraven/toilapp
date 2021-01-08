@@ -21,13 +21,13 @@ export abstract class ToiletServiceProvider {
     }
 }
 
-export function getDistanceString(distance: number) {
-    if (distance >= 1000) {
-        return (distance / 1000).toFixed(1) + "km";
-    } else if (distance < 0) {
+export function getDistanceString(distanceInKm: number) {
+    if (distanceInKm >= 1000) {
+        return "> 1000km";
+    } else if (distanceInKm < 0) {
         return "-";
     } else {
-        return distance.toFixed(0) + "m";
+        return distanceInKm.toFixed(2) + "km";
     }
 }
 
@@ -42,7 +42,7 @@ export interface ToiletService {
 
     updatePreviewImage(toiletId: string, image: File): Promise<string>
 
-    getToilets(geoLocation: GeoLocation, maxDistanceInMeters: number): Promise<ToiletOverview[]>
+    getToilets(location: GeoLocation, maxDistanceInKm: number, maxToiletsToLoad: number, minDistance: number, idsToExclude: Array<String>): Promise<ToiletOverview[]>
 
     getToiletDetails(toiletId: string, location: GeoLocation): Promise<ToiletDetails>
 }
@@ -101,9 +101,27 @@ class RestToiletService implements ToiletService {
         }
     }
 
-    async getToilets(geoLocation: GeoLocation, maxDistanceInMeters: number): Promise<ToiletOverview[]> {
+    async getToilets(
+        location: GeoLocation,
+        maxDistanceInKm: number,
+        maxToiletsToLoad: number,
+        minDistance: number = 0,
+        idsToExclude: Array<String> = []
+    ): Promise<ToiletOverview[]> {
         try {
-            const response = await axios.get(`/v1/toilets?lon=${geoLocation.lon}&lat=${geoLocation.lat}&maxDistanceInMeters=${maxDistanceInMeters}`)
+            const response = await axios.get(
+                `/v1/toilets`,
+                {
+                    params: {
+                        lon: location.lon,
+                        lat: location.lat,
+                        radiusInKm: maxDistanceInKm,
+                        maxToiletsToLoad: maxToiletsToLoad,
+                        minDistanceInKm: minDistance,
+                        toiletIdsToExclude: idsToExclude.join(",")
+                    }
+                }
+            )
             return Promise.resolve(response.data)
         } catch (error) {
             return errorPromise(error, "Error during getToilets")
@@ -152,7 +170,13 @@ class MockToiletService implements ToiletService {
         })
     }
 
-    public getToilets(geoLocation: GeoLocation, maxDistanceInMeters: number): Promise<ToiletOverview[]> {
+    public getToilets(
+        location: GeoLocation,
+        maxDistanceInKm: number,
+        maxToiletsToLoad: number,
+        minDistance: number = 0,
+        idsToExclude: Array<String> = []
+    ): Promise<ToiletOverview[]> {
         return new Promise<ToiletOverview[]>(function (resolve) {
             const toilets: ToiletOverview[] = [
                 {

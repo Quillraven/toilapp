@@ -1,7 +1,6 @@
 package com.github.quillraven.toilapp.controller
 
 import com.github.quillraven.toilapp.model.dto.CreateUpdateToiletDto
-import com.github.quillraven.toilapp.model.dto.GetNearbyToiletsDto
 import com.github.quillraven.toilapp.service.ToiletService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.web.bind.annotation.DeleteMapping
@@ -29,8 +28,13 @@ class ToiletController(
 
     @GetMapping
     fun getNearbyToilets(
-        @RequestBody(required = true) getNearbyToiletsDto: GetNearbyToiletsDto
-    ) = toiletService.getNearbyToilets(getNearbyToiletsDto)
+        @RequestParam(required = true) lon: Double,
+        @RequestParam(required = true) lat: Double,
+        @RequestParam(required = true) radiusInKm: Double,
+        @RequestParam(required = true) maxToiletsToLoad: Long,
+        @RequestParam(required = false) minDistanceInKm: Double,
+        @RequestParam(required = false) toiletIdsToExclude: String
+    ) = toiletService.getNearbyToilets(lon, lat, radiusInKm, maxToiletsToLoad, minDistanceInKm, toiletIdsToExclude)
 
     @GetMapping("/{id}")
     fun getToiletDetails(

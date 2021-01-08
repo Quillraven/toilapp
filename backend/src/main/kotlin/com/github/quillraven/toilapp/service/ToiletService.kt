@@ -4,7 +4,6 @@ import com.github.quillraven.toilapp.InvalidIdException
 import com.github.quillraven.toilapp.ToiletDoesNotExistException
 import com.github.quillraven.toilapp.model.db.Toilet
 import com.github.quillraven.toilapp.model.dto.CreateUpdateToiletDto
-import com.github.quillraven.toilapp.model.dto.GetNearbyToiletsDto
 import com.github.quillraven.toilapp.model.dto.ToiletDetailsDto
 import com.github.quillraven.toilapp.model.dto.ToiletOverviewDto
 import com.github.quillraven.toilapp.repository.ToiletRepository
@@ -20,7 +19,15 @@ import reactor.core.publisher.Mono
 interface ToiletService {
     fun create(createUpdateToiletDto: CreateUpdateToiletDto): Mono<ToiletDetailsDto>
     fun update(createUpdateToiletDto: CreateUpdateToiletDto): Mono<ToiletDetailsDto>
-    fun getNearbyToilets(getNearbyToiletsDto: GetNearbyToiletsDto): Flux<ToiletOverviewDto>
+    fun getNearbyToilets(
+        lon: Double,
+        lat: Double,
+        radiusInKm: Double,
+        maxToiletsToLoad: Long,
+        minDistanceInKm: Double,
+        toiletIdsToExclude: String
+    ): Flux<ToiletOverviewDto>
+
     fun getToiletDetails(id: String, lon: Double, lat: Double): Mono<ToiletDetailsDto>
     fun delete(id: String): Mono<Void>
 }
@@ -79,15 +86,32 @@ class DefaultToiletService(
             .map { it.createToiletDetailsDto(0.0, "", 0.0, 0) }
     }
 
-    override fun getNearbyToilets(getNearbyToiletsDto: GetNearbyToiletsDto): Flux<ToiletOverviewDto> {
-        LOG.debug("getNearbyToilets: (getNearbyToiletsDto=$getNearbyToiletsDto)")
+    override fun getNearbyToilets(
+        lon: Double,
+        lat: Double,
+        radiusInKm: Double,
+        maxToiletsToLoad: Long,
+        minDistanceInKm: Double,
+        toiletIdsToExclude: String
+    ): Flux<ToiletOverviewDto> {
+        val idsToExclude = toiletIdsToExclude.split(",").toCollection(mutableSetOf())
+        LOG.debug(
+            "getNearbyToilets: (" +
+                    "lon='$lon', " +
+                    "lat='$lat', " +
+                    "radiusInKm='$radiusInKm', " +
+                    "maxToiletsToLoad='$maxToiletsToLoad', " +
+                    "minDistanceInKm='$minDistanceInKm', " +
+                    "toiletIdsToExclude=$idsToExclude" +
+                    ")"
+        )
 
         return toiletRepository.getNearbyToilets(
-            getNearbyToiletsDto.location,
-            getNearbyToiletsDto.radiusInKm,
-            getNearbyToiletsDto.maxToiletsToLoad,
-            getNearbyToiletsDto.minDistanceInKm,
-            getNearbyToiletsDto.toiletIdsToExclude
+            GeoJsonPoint(lon, lat),
+            radiusInKm,
+            maxToiletsToLoad,
+            minDistanceInKm,
+            idsToExclude
         )
             .flatMapSequential { toiletDistanceInfo ->
                 Mono.zip(
