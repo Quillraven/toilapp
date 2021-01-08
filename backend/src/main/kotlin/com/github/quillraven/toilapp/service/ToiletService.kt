@@ -4,15 +4,14 @@ import com.github.quillraven.toilapp.InvalidIdException
 import com.github.quillraven.toilapp.ToiletDoesNotExistException
 import com.github.quillraven.toilapp.model.db.Toilet
 import com.github.quillraven.toilapp.model.dto.CreateUpdateToiletDto
+import com.github.quillraven.toilapp.model.dto.GetNearbyToiletsDto
 import com.github.quillraven.toilapp.model.dto.ToiletDetailsDto
 import com.github.quillraven.toilapp.model.dto.ToiletOverviewDto
 import com.github.quillraven.toilapp.repository.ToiletRepository
 import org.bson.types.ObjectId
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.data.geo.Distance
-import org.springframework.data.geo.Metrics
-import org.springframework.data.geo.Point
+import org.springframework.data.mongodb.core.geo.GeoJsonPoint
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import reactor.core.publisher.Flux
@@ -21,7 +20,7 @@ import reactor.core.publisher.Mono
 interface ToiletService {
     fun create(createUpdateToiletDto: CreateUpdateToiletDto): Mono<ToiletDetailsDto>
     fun update(createUpdateToiletDto: CreateUpdateToiletDto): Mono<ToiletDetailsDto>
-    fun getNearbyToilets(lon: Double, lat: Double, maxDistanceInMeters: Double): Flux<ToiletOverviewDto>
+    fun getNearbyToilets(getNearbyToiletsDto: GetNearbyToiletsDto): Flux<ToiletOverviewDto>
     fun getToiletDetails(id: String, lon: Double, lat: Double): Mono<ToiletDetailsDto>
     fun delete(id: String): Mono<Void>
 }
@@ -80,36 +79,29 @@ class DefaultToiletService(
             .map { it.createToiletDetailsDto(0.0, "", 0.0, 0) }
     }
 
-    private fun distanceToMeter(distance: Distance): Double {
-        return when (distance.metric) {
-            Metrics.KILOMETERS -> distance.value * 1000
-            Metrics.MILES -> distance.value * 1609.34
-            else -> distance.value
-        }
-    }
+    override fun getNearbyToilets(getNearbyToiletsDto: GetNearbyToiletsDto): Flux<ToiletOverviewDto> {
+        LOG.debug("getNearbyToilets: (getNearbyToiletsDto=$getNearbyToiletsDto)")
 
-    override fun getNearbyToilets(lon: Double, lat: Double, maxDistanceInMeters: Double): Flux<ToiletOverviewDto> {
-        LOG.debug("getNearbyToilets: (lon=$lon, lat=$lat, maxDistanceInMeters=$maxDistanceInMeters)")
-
-        return toiletRepository
-            .findByLocationNear(Point(lon, lat), Distance(maxDistanceInMeters / 1000, Metrics.KILOMETERS))
-            .flatMapSequential { geoResult ->
-                val toilet = geoResult.content
-
+        return toiletRepository.getNearbyToilets(
+            getNearbyToiletsDto.location,
+            getNearbyToiletsDto.radiusInKm,
+            getNearbyToiletsDto.maxToiletsToLoad,
+            getNearbyToiletsDto.minDistanceInKm,
+            getNearbyToiletsDto.toiletIdsToExclude
+        )
+            .flatMapSequential { toiletDistanceInfo ->
                 Mono.zip(
-                    Mono.just(geoResult),
-                    ratingService.getAverageRating(toilet),
-                    imageService.getPreviewURL(toilet.id)
+                    Mono.just(toiletDistanceInfo),
+                    ratingService.getAverageRating(toiletDistanceInfo.id),
+                    imageService.getPreviewURL(toiletDistanceInfo.id)
                 )
             }
             .map {
-                val geoResult = it.t1
-                val toilet = geoResult.content
+                val toiletDistanceInfo = it.t1
                 val averageRating = it.t2
                 val previewUrl = it.t3
 
-                toilet.createToiletOverviewDto(
-                    distanceToMeter(geoResult.distance),
+                toiletDistanceInfo.createToiletOverviewDto(
                     previewUrl,
                     averageRating
                 )
@@ -120,9 +112,9 @@ class DefaultToiletService(
         Mono.zip(
             Mono.just(toilet),
             imageService.getPreviewURL(toilet.id),
-            ratingService.getAverageRating(toilet),
+            ratingService.getAverageRating(toilet.id),
             commentService.getNumComments(toilet.id),
-            toiletRepository.getDistanceBetween(toilet.id, Point(lon, lat))
+            toiletRepository.getDistanceBetween(toilet.id, GeoJsonPoint(lon, lat))
         )
 
     override fun getToiletDetails(id: String, lon: Double, lat: Double): Mono<ToiletDetailsDto> {

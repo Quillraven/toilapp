@@ -1,7 +1,6 @@
 package com.github.quillraven.toilapp.model.db
 
 import com.github.quillraven.toilapp.model.dto.ToiletDetailsDto
-import com.github.quillraven.toilapp.model.dto.ToiletOverviewDto
 import org.bson.types.ObjectId
 import org.springframework.data.annotation.Id
 import org.springframework.data.mongodb.core.geo.GeoJsonPoint
@@ -36,20 +35,6 @@ data class Toilet(
         previewURL = previewURL,
         rating = rating,
         numComments = numComments,
-        disabled = disabled,
-        toiletCrewApproved = toiletCrewApproved
-    )
-
-    fun createToiletOverviewDto(
-        distance: Double,
-        previewURL: String,
-        rating: Double
-    ) = ToiletOverviewDto(
-        id = id.toHexString(),
-        title = title,
-        distance = distance,
-        previewURL = previewURL,
-        rating = rating,
         disabled = disabled,
         toiletCrewApproved = toiletCrewApproved
     )
