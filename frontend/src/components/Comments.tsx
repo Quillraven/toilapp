@@ -2,7 +2,16 @@ import {createStyles, makeStyles, Theme} from "@material-ui/core/styles";
 import React, {useEffect, useRef, useState} from "react";
 import {ToiletComment} from "../model/ToiletComment"
 import TextField from "@material-ui/core/TextField"
-import {CircularProgress, Divider, GridList, GridListTile, IconButton, Snackbar, Typography} from "@material-ui/core";
+import {
+    CircularProgress,
+    debounce,
+    Divider,
+    GridList,
+    GridListTile,
+    IconButton,
+    Snackbar,
+    Typography
+} from "@material-ui/core";
 import {Send} from "@material-ui/icons";
 import {Alert, Color} from "@material-ui/lab";
 import {ToiletDetails} from "../model/ToiletDetails";
@@ -74,7 +83,7 @@ export default function Comments(props: CommentsProps) {
         }
     };
 
-    const onCommentsScroll = (event: React.SyntheticEvent) => {
+    const onCommentsScroll = debounce((event: React.SyntheticEvent) => {
         if (event.target instanceof Element) {
             const element: Element = event.target
             const scrollPercentage = element.scrollTop / (element.scrollHeight - element.clientHeight)
@@ -100,7 +109,7 @@ export default function Comments(props: CommentsProps) {
                 })()
             }
         }
-    }
+    })
 
     const closeAlert = (event?: React.SyntheticEvent, reason?: string) => {
         if (reason === 'clickaway') {
