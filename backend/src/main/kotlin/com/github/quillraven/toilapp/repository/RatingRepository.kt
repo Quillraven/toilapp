@@ -3,7 +3,6 @@ package com.github.quillraven.toilapp.repository
 import com.github.quillraven.toilapp.model.db.RATINGS_COLLECTION_NAME
 import com.github.quillraven.toilapp.model.db.Rating
 import com.github.quillraven.toilapp.model.db.RatingInfo
-import com.github.quillraven.toilapp.model.db.Toilet
 import org.bson.types.ObjectId
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.mongodb.core.ReactiveMongoTemplate
@@ -21,16 +20,16 @@ interface RatingRepository : ReactiveMongoRepository<Rating, ObjectId>, CustomRa
 }
 
 interface CustomRatingRepository {
-    fun getAverageRating(toilet: Toilet): Mono<Double>
+    fun getAverageRating(toiletId: ObjectId): Mono<Double>
 }
 
 class CustomRatingRepositoryImpl(
     @Autowired private val mongoTemplate: ReactiveMongoTemplate
 ) : CustomRatingRepository {
-    override fun getAverageRating(toilet: Toilet): Mono<Double> {
+    override fun getAverageRating(toiletId: ObjectId): Mono<Double> {
         val aggregation = Aggregation.newAggregation(
             // filter by toilet id
-            Aggregation.match(Criteria(Rating::toiletId.name).`is`(toilet.id)),
+            Aggregation.match(Criteria(Rating::toiletId.name).`is`(toiletId)),
             // group by toilet id and user sum and count to calculate average rating
             Aggregation.group(Rating::toiletId.name)
                 .count().`as`(RatingInfo::numRatings.name)

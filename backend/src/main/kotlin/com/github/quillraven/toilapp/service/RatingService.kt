@@ -5,7 +5,6 @@ import com.github.quillraven.toilapp.InvalidRatingValueException
 import com.github.quillraven.toilapp.RatingDoesNotExistException
 import com.github.quillraven.toilapp.ToiletDoesNotExistException
 import com.github.quillraven.toilapp.model.db.Rating
-import com.github.quillraven.toilapp.model.db.Toilet
 import com.github.quillraven.toilapp.model.dto.CreateUpdateRatingDto
 import com.github.quillraven.toilapp.model.dto.RatingDto
 import com.github.quillraven.toilapp.repository.RatingRepository
@@ -19,7 +18,7 @@ import reactor.core.publisher.Mono
 interface RatingService {
     fun create(createUpdateRatingDto: CreateUpdateRatingDto): Mono<RatingDto>
     fun update(createUpdateRatingDto: CreateUpdateRatingDto): Mono<RatingDto>
-    fun getAverageRating(toilet: Toilet): Mono<Double>
+    fun getAverageRating(toiletId: ObjectId): Mono<Double>
     fun getUserRating(toiletId: String): Mono<RatingDto>
     fun delete(id: String): Mono<Void>
     fun deleteByToiletId(toiletId: ObjectId): Mono<Void>
@@ -100,10 +99,10 @@ class DefaultRatingService(
         }
     }
 
-    override fun getAverageRating(toilet: Toilet): Mono<Double> {
-        LOG.debug("getAverageRating: (toilet=$toilet)")
+    override fun getAverageRating(toiletId: ObjectId): Mono<Double> {
+        LOG.debug("getAverageRating: (toiletId=$toiletId)")
 
-        return ratingRepository.getAverageRating(toilet)
+        return ratingRepository.getAverageRating(toiletId)
     }
 
     override fun getUserRating(toiletId: String): Mono<RatingDto> {
