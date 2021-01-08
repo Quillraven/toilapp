@@ -28,7 +28,7 @@ object RatingRepositorySpec : Spek({
             } returns Flux.just(RatingInfo(5, 2))
 
             StepVerifier
-                .create(ratingRepository.getAverageRating(toilet))
+                .create(ratingRepository.getAverageRating(toilet.id))
                 .expectNext(2.5)
                 .expectComplete()
                 .verify()
@@ -45,7 +45,7 @@ object RatingRepositorySpec : Spek({
             } returns Flux.empty()
 
             StepVerifier
-                .create(ratingRepository.getAverageRating(toilet))
+                .create(ratingRepository.getAverageRating(toilet.id))
                 .expectNext(0.0)
                 .expectComplete()
                 .verify()

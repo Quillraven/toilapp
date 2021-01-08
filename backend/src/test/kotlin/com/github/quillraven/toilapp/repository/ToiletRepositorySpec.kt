@@ -7,9 +7,9 @@ import io.mockk.mockk
 import org.bson.types.ObjectId
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
-import org.springframework.data.geo.Point
 import org.springframework.data.mongodb.core.ReactiveMongoTemplate
 import org.springframework.data.mongodb.core.aggregation.Aggregation
+import org.springframework.data.mongodb.core.geo.GeoJsonPoint
 import reactor.core.publisher.Flux
 import reactor.test.StepVerifier
 
@@ -20,7 +20,7 @@ object ToiletRepositorySpec : Spek({
     describe("CustomToiletRepository") {
         it("should return DistanceInfo of 100") {
             val toiletId = ObjectId()
-            val point = Point(0.0, 0.0)
+            val point = GeoJsonPoint(0.0, 0.0)
             val distanceInfo = DistanceInfo(100.0)
             every {
                 reactiveMongoTemplate.aggregate(
@@ -32,14 +32,14 @@ object ToiletRepositorySpec : Spek({
 
             StepVerifier
                 .create(toiletRepository.getDistanceBetween(toiletId, point))
-                .expectNext(distanceInfo.copy(distance = distanceInfo.distance * 1000))
+                .expectNext(distanceInfo.copy(distance = distanceInfo.distance))
                 .expectComplete()
                 .verify()
         }
 
         it("should return DistanceInfo of 0") {
             val toiletId = ObjectId()
-            val point = Point(0.0, 0.0)
+            val point = GeoJsonPoint(0.0, 0.0)
             every {
                 reactiveMongoTemplate.aggregate(
                     any<Aggregation>(),

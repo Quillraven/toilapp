@@ -1,7 +1,7 @@
 package com.github.quillraven.toilapp.controller
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.github.quillraven.toilapp.model.db.Toilet
+import com.github.quillraven.toilapp.model.db.ToiletDistanceInfo
 import com.github.quillraven.toilapp.model.dto.ToiletOverviewDto
 import com.github.quillraven.toilapp.repository.ToiletRepository
 import com.github.quillraven.toilapp.service.CommentService
@@ -14,11 +14,8 @@ import io.mockk.mockk
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest
-import org.springframework.data.geo.Distance
-import org.springframework.data.geo.GeoResult
-import org.springframework.data.geo.Metrics
-import org.springframework.data.geo.Point
 import org.springframework.data.mongodb.core.geo.GeoJsonModule
+import org.springframework.data.mongodb.core.geo.GeoJsonPoint
 import org.springframework.http.MediaType
 import org.springframework.http.codec.json.Jackson2JsonDecoder
 import org.springframework.http.codec.json.Jackson2JsonEncoder
@@ -62,27 +59,28 @@ object ToiletControllerSpec : Spek({
         it("should return flux with three toilets and different distances") {
             val lon = 0.0
             val lat = 0.0
-            val maxDistanceInMeters = 400000.0
-            val expectedToilet1 = Toilet()
-            val expectedToilet2 = Toilet()
-            val expectedToilet3 = Toilet()
-            val expectedGeoResult1 = GeoResult(expectedToilet1, Distance(10.0, Metrics.KILOMETERS))
-            val expectedGeoResult2 = GeoResult(expectedToilet2, Distance(20.0, Metrics.MILES))
-            val expectedGeoResult3 = GeoResult(expectedToilet3, Distance(30.0))
+            val maxDistanceInKm = 400.0
+            val maxToiletsToLoad = 20L
+            val expectedResult1 = ToiletDistanceInfo(distance = 10.0)
+            val expectedResult2 = ToiletDistanceInfo(distance = 20.0)
+            val expectedResult3 = ToiletDistanceInfo(distance = 30.0)
             every {
-                toiletRepository.findByLocationNear(
-                    Point(lon, lat),
-                    Distance(maxDistanceInMeters / 1000, Metrics.KILOMETERS)
-                )
+                toiletRepository.getNearbyToilets(GeoJsonPoint(lon, lat), maxDistanceInKm, maxToiletsToLoad)
             } returns Flux.just(
-                expectedGeoResult1,
-                expectedGeoResult2,
-                expectedGeoResult3
+                expectedResult1,
+                expectedResult2,
+                expectedResult3
             )
             every { ratingService.getAverageRating(any()) } returns Mono.just(0.0)
             every { imageService.getPreviewURL(any()) } returns Mono.just("")
 
-            val result = client.get().uri("/api/v1/toilets?lon=$lon&lat=$lat&maxDistanceInMeters=$maxDistanceInMeters")
+            val result = client.get().uri(
+                "/api/v1/toilets?" +
+                        "lon=$lon&" +
+                        "lat=$lat&" +
+                        "radiusInKm=$maxDistanceInKm&" +
+                        "maxToiletsToLoad=$maxToiletsToLoad"
+            )
                 .accept(MediaType.TEXT_EVENT_STREAM)
                 .exchange()
                 .expectStatus().isOk
@@ -90,9 +88,9 @@ object ToiletControllerSpec : Spek({
                 .responseBody
 
             StepVerifier.create(result)
-                .expectNext(expectedToilet1.createToiletOverviewDto(10.0 * 1000, "", 0.0))
-                .expectNext(expectedToilet2.createToiletOverviewDto(20.0 * 1609.34, "", 0.0))
-                .expectNext(expectedToilet3.createToiletOverviewDto(30.0, "", 0.0))
+                .expectNext(expectedResult1.createToiletOverviewDto("", 0.0))
+                .expectNext(expectedResult2.createToiletOverviewDto("", 0.0))
+                .expectNext(expectedResult3.createToiletOverviewDto("", 0.0))
                 .expectComplete()
                 .verify()
         }

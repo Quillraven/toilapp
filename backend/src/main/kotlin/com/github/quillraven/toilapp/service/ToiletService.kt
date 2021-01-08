@@ -94,7 +94,12 @@ class DefaultToiletService(
         minDistanceInKm: Double,
         toiletIdsToExclude: String
     ): Flux<ToiletOverviewDto> {
-        val idsToExclude = toiletIdsToExclude.split(",").toCollection(mutableSetOf())
+        val idsToExclude: Set<String> = if (toiletIdsToExclude.isEmpty()) {
+            setOf()
+        } else {
+            toiletIdsToExclude.split(",").toCollection(mutableSetOf())
+        }
+
         LOG.debug(
             "getNearbyToilets: (" +
                     "lon='$lon', " +

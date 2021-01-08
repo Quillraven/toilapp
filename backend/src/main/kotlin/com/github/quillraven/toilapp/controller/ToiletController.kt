@@ -32,8 +32,8 @@ class ToiletController(
         @RequestParam(required = true) lat: Double,
         @RequestParam(required = true) radiusInKm: Double,
         @RequestParam(required = true) maxToiletsToLoad: Long,
-        @RequestParam(required = false) minDistanceInKm: Double,
-        @RequestParam(required = false) toiletIdsToExclude: String
+        @RequestParam(required = false, defaultValue = "0") minDistanceInKm: Double,
+        @RequestParam(required = false, defaultValue = "") toiletIdsToExclude: String
     ) = toiletService.getNearbyToilets(lon, lat, radiusInKm, maxToiletsToLoad, minDistanceInKm, toiletIdsToExclude)
 
     @GetMapping("/{id}")
