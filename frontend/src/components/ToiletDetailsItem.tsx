@@ -1,10 +1,10 @@
-import {Box, createStyles, Divider, Grid, Typography} from "@material-ui/core";
+import {Box, createStyles, Divider, Grid, Link, Typography} from "@material-ui/core";
 import React from "react";
 import {RatingView} from "./Rating";
 import {ToiletDetails} from "../model/ToiletDetails";
 import {getDistanceString} from "../services/ToiletService";
 import {makeStyles, Theme} from "@material-ui/core/styles";
-import {AccessibleForward} from "@material-ui/icons";
+import {AccessibleForward, Room} from "@material-ui/icons";
 import Comments from "./Comments";
 import UserRating from "./UserRating";
 import axios from "axios";
@@ -54,6 +54,10 @@ export default function ToiletDetailsItem(props: ToiletDetailsItemProps) {
     const classes = useStyles();
     const toiletDetails = props.toiletDetails;
 
+    const getGoogleMapsLink = (lon: number, lat: number, zoom: number): string => {
+        return `https://www.google.com/maps/place/${lat},${lon}/@${lat},${lon},${zoom}z`
+    }
+
     return (
         <Grid
             container
@@ -85,6 +89,17 @@ export default function ToiletDetailsItem(props: ToiletDetailsItemProps) {
                     {toiletDetails.description}
                 </Typography>
                 <Divider className={classes.dividerDescription} variant="fullWidth"/>
+                <Typography>
+                    <Room fontSize="large"/>
+                    {"Google Maps: "}
+                    <Link
+                        target="_blank"
+                        rel="noreferrer"
+                        href={getGoogleMapsLink(toiletDetails.location.x, toiletDetails.location.y, 18.5)}
+                    >
+                        Link
+                    </Link>
+                </Typography>
             </Grid>
             <Grid item xs={12} md={5} className={classes.gridItem}>
                 <UserRating toiletId={toiletDetails.id}/>
