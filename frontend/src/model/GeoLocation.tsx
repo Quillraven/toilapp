@@ -1,4 +1,4 @@
 export interface GeoLocation {
-    lon: number,
-    lat: number
+    x: number, //lon
+    y: number // lat
 }
