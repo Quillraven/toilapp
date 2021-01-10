@@ -65,11 +65,8 @@ class RestToiletService implements ToiletService {
                         title: title,
                         description: description,
                         location: {
-                            type: "Point",
-                            coordinates: [
-                                location.lon,
-                                location.lat
-                            ],
+                            x: location.x,
+                            y: location.y
                         },
                         disabled: disabled,
                         toiletCrewApproved: false,
@@ -103,7 +100,7 @@ class RestToiletService implements ToiletService {
 
     async getToilets(geoLocation: GeoLocation, maxDistanceInMeters: number): Promise<ToiletOverview[]> {
         try {
-            const response = await axios.get(`/v1/toilets?lon=${geoLocation.lon}&lat=${geoLocation.lat}&maxDistanceInMeters=${maxDistanceInMeters}`)
+            const response = await axios.get(`/v1/toilets?lon=${geoLocation.x}&lat=${geoLocation.y}&maxDistanceInMeters=${maxDistanceInMeters}`)
             return Promise.resolve(response.data)
         } catch (error) {
             return errorPromise(error, "Error during getToilets")
@@ -113,7 +110,7 @@ class RestToiletService implements ToiletService {
     async getToiletDetails(toiletId: string, location: GeoLocation): Promise<ToiletDetails> {
         console.log(`getToiletDetails for '${toiletId}'`)
         try {
-            const response = await axios.get(`/v1/toilets/${toiletId}?lon=${location.lon}&lat=${location.lat}`)
+            const response = await axios.get(`/v1/toilets/${toiletId}?lon=${location.x}&lat=${location.y}`)
             return Promise.resolve(response.data)
         } catch (error) {
             return errorPromise(error, "Error during getToiletDetails")
@@ -221,8 +218,8 @@ class MockToiletService implements ToiletService {
                 title: "Beautiful toilet",
                 description: "Best shit experience you'll ever have!",
                 location: {
-                    lat: 42,
-                    lon: 42,
+                    y: 42,
+                    x: 42,
                 },
                 distance: 2313.0,
                 previewURL: "/mock/toilet1.jpg",

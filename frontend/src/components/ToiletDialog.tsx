@@ -44,7 +44,7 @@ export const ToiletDialog = forwardRef<ToiletDialogRef, ToiletDialogProps>((prop
     const [thumbnail, setThumbnail] = useState<File | null>(null)
     const [disabled, setDisabled] = useState(false)
     // TODO prefill location with current location from user
-    const [location, setLocation] = useState<GeoLocation>({lat: EMPTY_LOCATION, lon: EMPTY_LOCATION} as GeoLocation)
+    const [location, setLocation] = useState<GeoLocation>({y: EMPTY_LOCATION, x: EMPTY_LOCATION} as GeoLocation)
 
     const updateTitle = (e: React.ChangeEvent<HTMLInputElement>) => {
         setTitle(e.target.value)
@@ -69,11 +69,11 @@ export const ToiletDialog = forwardRef<ToiletDialogRef, ToiletDialogProps>((prop
     const updateLongitude = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.value.length > 0) {
             setLocation(prevLocation => {
-                return {...prevLocation, lon: e.target.valueAsNumber}
+                return {...prevLocation, x: e.target.valueAsNumber}
             })
         } else {
             setLocation(prevLocation => {
-                return {...prevLocation, lon: EMPTY_LOCATION}
+                return {...prevLocation, x: EMPTY_LOCATION}
             })
         }
     }
@@ -81,17 +81,17 @@ export const ToiletDialog = forwardRef<ToiletDialogRef, ToiletDialogProps>((prop
     const updateLatitude = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.value.length > 0) {
             setLocation(prevLocation => {
-                return {...prevLocation, lat: e.target.valueAsNumber}
+                return {...prevLocation, y: e.target.valueAsNumber}
             })
         } else {
             setLocation(prevLocation => {
-                return {...prevLocation, lat: EMPTY_LOCATION}
+                return {...prevLocation, y: EMPTY_LOCATION}
             })
         }
     }
 
     function validateInput(): boolean {
-        return title.length > 0 && location.lat !== EMPTY_LOCATION && location.lon !== EMPTY_LOCATION
+        return title.length > 0 && location.y !== EMPTY_LOCATION && location.x !== EMPTY_LOCATION
     }
 
     const handleSubmit = async () => {
@@ -116,7 +116,7 @@ export const ToiletDialog = forwardRef<ToiletDialogRef, ToiletDialogProps>((prop
         setTitle("")
         setDescription("")
         setThumbnail(null)
-        setLocation({lat: EMPTY_LOCATION, lon: EMPTY_LOCATION})
+        setLocation({y: EMPTY_LOCATION, x: EMPTY_LOCATION})
         setOpen(false)
     }
 
@@ -147,7 +147,7 @@ export const ToiletDialog = forwardRef<ToiletDialogRef, ToiletDialogProps>((prop
                 <TextField
                     required
                     onChange={updateLongitude}
-                    error={location.lon === EMPTY_LOCATION}
+                    error={location.x === EMPTY_LOCATION}
                     margin="dense"
                     id="toilet-dialog-longitude"
                     label="Longitude"
@@ -156,7 +156,7 @@ export const ToiletDialog = forwardRef<ToiletDialogRef, ToiletDialogProps>((prop
                 <TextField
                     required
                     onChange={updateLatitude}
-                    error={location.lat === EMPTY_LOCATION}
+                    error={location.y === EMPTY_LOCATION}
                     margin="dense"
                     id="toilet-dialog-latitude"
                     label="Latitude"
