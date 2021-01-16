@@ -1,13 +1,10 @@
-export interface GeoLocationParam {
-    type: string,
-    coordinates: number[]
-}
+import {GeoLocation} from "./GeoLocation";
 
 export interface CreateUpdateToilet {
     id: string,
     title: string,
     description: string,
-    location: GeoLocationParam,
+    location: GeoLocation,
     disabled: boolean,
     toiletCrewApproved: boolean,
 }

@@ -2,6 +2,7 @@ package com.github.quillraven.toilapp.configuration
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.springframework.context.annotation.Configuration
+import org.springframework.data.geo.GeoModule
 import org.springframework.data.mongodb.core.geo.GeoJsonModule
 import org.springframework.data.web.config.SpringDataJacksonModules
 import org.springframework.http.codec.ServerCodecConfigurer
@@ -16,6 +17,7 @@ import org.springframework.web.reactive.config.WebFluxConfigurer
 class WebConfiguration : WebFluxConfigurer, SpringDataJacksonModules {
     private val objectMapper = jacksonObjectMapper().apply {
         registerModule(GeoJsonModule())
+        registerModule(GeoModule())
     }
 
     override fun addCorsMappings(registry: CorsRegistry) {

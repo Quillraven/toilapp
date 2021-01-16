@@ -8,6 +8,7 @@ import {AccessibleForward} from "@material-ui/icons";
 import Comments from "./Comments";
 import UserRating from "./UserRating";
 import axios from "axios";
+import GoogleMaps from "./GoogleMaps";
 
 const useStyles = makeStyles((theme: Theme) =>
     createStyles({
@@ -85,6 +86,10 @@ export default function ToiletDetailsItem(props: ToiletDetailsItemProps) {
                     {toiletDetails.description}
                 </Typography>
                 <Divider className={classes.dividerDescription} variant="fullWidth"/>
+                {
+                    process.env.REACT_APP_GOOGLE_MAPS_API_KEY &&
+                    <GoogleMaps markerName={toiletDetails.title} location={toiletDetails.location} zoom={20}/>
+                }
             </Grid>
             <Grid item xs={12} md={5} className={classes.gridItem}>
                 <UserRating toiletId={toiletDetails.id}/>

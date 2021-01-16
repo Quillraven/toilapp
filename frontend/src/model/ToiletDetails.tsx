@@ -18,8 +18,8 @@ export const EMPTY_DETAILS: ToiletDetails = {
     title: "",
     description: "",
     location: {
-        lon: 0,
-        lat: 0
+        x: 0,
+        y: 0
     },
     distance: 0,
     previewURL: "",

@@ -27,15 +27,15 @@ class DefaultGeoLocationService implements GeoLocationService {
         // TODO: If not available: on a computer -> Ask a IP to loaction web service for the location (e.g. Google.)
 
         return {
-            lon: 16.0,
-            lat: 47.0
+            x: 16.0,
+            y: 47.0
         };
     }
 }
 
 class MockGeoLocationService implements GeoLocationService {
     getGeoLocation = () => ({
-        lon: 16.0,
-        lat: 47.0
-    })
+        x: 16.0,
+        y: 47.0
+    } as GeoLocation)
 }

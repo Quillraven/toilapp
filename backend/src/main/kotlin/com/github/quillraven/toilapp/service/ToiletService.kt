@@ -10,7 +10,9 @@ import com.github.quillraven.toilapp.repository.ToiletRepository
 import org.bson.types.ObjectId
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.data.mongodb.core.geo.GeoJsonPoint
+import org.springframework.data.geo.Distance
+import org.springframework.data.geo.Metrics
+import org.springframework.data.geo.Point
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import reactor.core.publisher.Flux
@@ -46,7 +48,7 @@ class DefaultToiletService(
             .save(
                 Toilet(
                     title = createUpdateToiletDto.title,
-                    location = createUpdateToiletDto.location,
+                    location = GeoJsonPoint(createUpdateToiletDto.location),
                     disabled = createUpdateToiletDto.disabled,
                     toiletCrewApproved = createUpdateToiletDto.toiletCrewApproved,
                     description = createUpdateToiletDto.description
@@ -75,7 +77,7 @@ class DefaultToiletService(
                 toiletRepository.save(
                     it.copy(
                         title = createUpdateToiletDto.title,
-                        location = createUpdateToiletDto.location,
+                        location = GeoJsonPoint(createUpdateToiletDto.location),
                         disabled = createUpdateToiletDto.disabled,
                         toiletCrewApproved = createUpdateToiletDto.toiletCrewApproved,
                         description = createUpdateToiletDto.description
