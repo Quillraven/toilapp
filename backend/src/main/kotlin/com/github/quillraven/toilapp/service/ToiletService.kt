@@ -10,9 +10,7 @@ import com.github.quillraven.toilapp.repository.ToiletRepository
 import org.bson.types.ObjectId
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.data.geo.Distance
-import org.springframework.data.geo.Metrics
-import org.springframework.data.geo.Point
+import org.springframework.data.mongodb.core.geo.GeoJsonPoint
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import reactor.core.publisher.Flux
