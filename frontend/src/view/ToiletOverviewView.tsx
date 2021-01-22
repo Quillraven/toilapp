@@ -40,36 +40,6 @@ export default function ToiletOverviewView() {
     const idsToExclude = useRef<String[]>([])
     const hasMoreToilets = useRef(true)
 
-    function loadToilets() {
-        (async () => {
-            setIsLoading(true)
-            try {
-                //TODO get maxDistanceInMeters and toiletsToLoad from current user preferences
-                const overviews = await toiletService.getToilets(
-                    locationService.getGeoLocation(),
-                    4000,
-                    20,
-                    minDistance.current,
-                    idsToExclude.current
-                )
-                console.log("Toilet data loaded")
-                updateOverviewInformation(overviews)
-            } catch (error) {
-                console.error(`Error while loading toilet data: ${error}`)
-            }
-            setIsLoading(false)
-        })()
-    }
-
-    const onToiletsScroll = debounce(() => {
-        const element: Element = document.documentElement
-        const scrollPercentage = element.scrollTop / (element.scrollHeight - element.clientHeight)
-
-        if (scrollPercentage >= 0.5 && !isLoading && hasMoreToilets.current) {
-            loadToilets()
-        }
-    })
-
     const closeAlert = (event?: React.SyntheticEvent, reason?: string) => {
         if (reason === 'clickaway') {
             return;
@@ -98,27 +68,58 @@ export default function ToiletOverviewView() {
             })
         }
 
-        console.log(`minDistance='${minDistance.current}', idsToExclude='${idsToExclude.current}'`)
+        console.log(`minDistance='${minDistance.current}', idsToExclude='${idsToExclude.current}, hasMoreToilets='${hasMoreToilets.current}'`)
     }
 
     useEffect(
         () => {
-            hasMoreToilets.current = true
-            minDistance.current = 0
-            idsToExclude.current = []
-            setToiletOverviews([])
-            loadToilets()
+            function loadToilets() {
+                (async () => {
+                    if (isLoading || !hasMoreToilets) {
+                        // do not run this method if a load is still in progress
+                        // or if there is nothing else to fetch anymore
+                        return
+                    }
+
+                    setIsLoading(true)
+                    try {
+                        //TODO get maxDistanceInMeters and toiletsToLoad from current user preferences
+                        const overviews = await toiletService.getToilets(
+                            locationService.getGeoLocation(),
+                            4000,
+                            20,
+                            minDistance.current,
+                            idsToExclude.current
+                        )
+                        console.log("Toilet data loaded")
+                        updateOverviewInformation(overviews)
+                    } catch (error) {
+                        console.error(`Error while loading toilet data: ${error}`)
+                    }
+                    setIsLoading(false)
+                })()
+            }
+
+            const onToiletsScroll = debounce(() => {
+                const element: Element = document.documentElement
+                const scrollPercentage = element.scrollTop / (element.scrollHeight - element.clientHeight)
+
+                if (scrollPercentage >= 0.5 && !isLoading && hasMoreToilets.current) {
+                    loadToilets()
+                }
+            })
+
+            if (toiletOverviews.length === 0) {
+                // make initial call to loadToilets only if there are no toilets loaded yet
+                loadToilets()
+            }
 
             window.addEventListener("scroll", onToiletsScroll)
             return () => {
                 window.removeEventListener("scroll", onToiletsScroll)
             }
         },
-        // DO NOT !!! add loadToilets or onToiletsScroll to the dependencies. It will produce an infinite loop.
-        // No idea, how to fix it properly (tried useCallback but there also warnings are thrown with missing
-        // dependencies and if you add them you get another infinite loop
-        // eslint-disable-next-line
-        []
+        [locationService, toiletService, isLoading, toiletOverviews]
     );
 
     return (
