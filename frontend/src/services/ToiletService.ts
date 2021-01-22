@@ -128,7 +128,13 @@ class RestToiletService implements ToiletService {
     async getToiletDetails(toiletId: string, location: GeoLocation): Promise<ToiletDetails> {
         console.log(`getToiletDetails for '${toiletId}'`)
         try {
-            const response = await axios.get(`/v1/toilets/${toiletId}?lon=${location.x}&lat=${location.y}`)
+            const response = await axios.get(`/v1/toilets/${toiletId}`,
+                {
+                    params: {
+                        lon: location.x,
+                        lat: location.y
+                    }
+                })
             return Promise.resolve(response.data)
         } catch (error) {
             return errorPromise(error, "Error during getToiletDetails")

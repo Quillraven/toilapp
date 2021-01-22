@@ -30,7 +30,13 @@ class RestCommentService implements CommentService {
         console.log(`getComments: (toiletId=${toiletId}, page=${page}, numComments=${numComments}`)
 
         try {
-            const response = await axios.get(`/v1/comments/${toiletId}?page=${page}&numComments=${numComments}`)
+            const response = await axios.get(`/v1/comments/${toiletId}`,
+                {
+                    params: {
+                        page: page,
+                        numComments: numComments
+                    }
+                })
             return Promise.resolve(response.data)
         } catch (error) {
             return errorPromise(error, "Error during getComments")

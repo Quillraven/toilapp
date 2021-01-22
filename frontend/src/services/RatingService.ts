@@ -30,7 +30,12 @@ class RestRatingService implements RatingService {
         console.log(`getUserRating for toilet '${toiletId}'`)
 
         try {
-            const response = await axios.get(`/v1/ratings?toiletId=${toiletId}`)
+            const response = await axios.get(`/v1/ratings`,
+                {
+                    params: {
+                        toiletId: toiletId
+                    }
+                })
             return Promise.resolve(response.data)
         } catch (error) {
             return errorPromise(error, "Error during getUserRating")
