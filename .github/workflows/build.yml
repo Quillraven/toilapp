@@ -30,7 +30,6 @@ jobs:
           java-version: 1.8
 
       - name: Build backend with Gradle
-        working-directory: ./backend
         run: ./gradlew clean :backend:build
         
       - name: Set up Node.js
