@@ -1,5 +1,10 @@
 # toilapp
 
+[![Build Master](https://img.shields.io/github/workflow/status/quillraven/toilapp/Build/master?event=push&label=Build%20master)](https://github.com/Quillraven/toilapp/actions)
+[![Kotlin](https://img.shields.io/badge/Kotlin-1.3.72-red.svg)](http://kotlinlang.org/)
+[![Spring](https://img.shields.io/badge/Spring-2.3.7-green.svg)](https://spring.io/)
+[![LibKTX](https://img.shields.io/badge/Typescript-4.0.3-blue.svg)](https://www.typescriptlang.org/)
+
 ### How to setup MongoDB for local development using Docker
 
 In order to use multi-document transactions (=`@Transactional` annotation) you need to have a **replica set** mongodb
